@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Bloco de Notas</title>
+<style>
+  :root{
+    --border:#d9d9d9;
+    --text:#1a1a1a;
+    --muted:#8a8a8a;
+    --accent:#2f6fed;
+    --bad:#c23b3b;
+    --good:#2f7d4f;
+    --tab-bg:#f4f4f4;
+    --hi:#fff59d;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:#ffffff;
+    color:var(--text);
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------------- GATE ---------------- */
+  #gate{ flex:1; display:flex; align-items:center; justify-content:center; padding:24px; }
+  .gate-box{ width:100%; max-width:380px; }
+  .gate-title{ font-size:15px; font-weight:600; margin:0 0 18px; color:var(--text); }
+  .url-row{
+    display:flex; align-items:center;
+    border:1px solid var(--border); border-radius:2px;
+    padding:0 10px; margin-bottom:10px;
+  }
+  .url-row .prefix{ color:var(--muted); font-size:14px; white-space:nowrap; }
+  .url-row input{
+    flex:1; border:none; outline:none; padding:10px 6px;
+    font-size:14px; color:var(--text); min-width:0; font-family:inherit;
+  }
+  input[type=password]{
+    width:100%; border:1px solid var(--border); border-radius:2px;
+    padding:10px; font-size:14px; outline:none; margin-bottom:8px;
+    font-family:inherit; color:var(--text);
+  }
+  input:focus{border-color:var(--accent);}
+  .btn{
+    font-family:inherit; font-size:13px; font-weight:600;
+    border:1px solid var(--text); background:var(--text); color:#fff;
+    border-radius:2px; padding:9px 16px; cursor:pointer;
+  }
+  .btn:hover{opacity:.85;}
+  .btn:active{opacity:.7;}
+  .btn.ghost{ background:#fff; color:var(--text); border:1px solid var(--border); }
+  .btn.ghost:hover{border-color:var(--text);}
+  .btn.solid-danger{ background:var(--bad); color:#fff; border:1px solid var(--bad); }
+  .btn.solid-danger:hover{ opacity:.9; }
+  .btn[disabled]{opacity:.4; cursor:not-allowed;}
+
+  .pw-panel{margin-top:14px;}
+  .pw-panel .label{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+  .row-btns{margin-top:4px;}
+  .msg{font-size:12.5px;margin-top:8px;min-height:16px;}
+  .msg.bad{color:var(--bad);}
+  .msg.good{color:var(--good);}
+  .hint{font-size:12px;color:var(--muted);margin:14px 0 0;}
+
+  /* ---------------- EDITOR ---------------- */
+  #editor{ display:none; flex-direction:column; height:100vh; position:relative; }
+  .titlebar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:6px 10px; border-bottom:1px solid var(--border);
+    font-size:12.5px; color:var(--muted); flex:none; gap:10px;
+  }
+  .titlebar .name{color:var(--text);font-weight:600;}
+  .titlebar .path{flex:none; white-space:nowrap;}
+
+  .link-btn{
+    background:none;border:none;cursor:pointer;
+    font-family:inherit;font-size:12.5px;color:var(--muted); padding:6px 4px; text-align:left; width:100%;
+    display:block;
+  }
+  .link-btn:hover{color:var(--text);}
+  .link-btn.danger{color:var(--bad);}
+  .link-btn.danger:hover{color:var(--bad);}
+
+  /* search */
+  .search-box{
+    display:flex; align-items:center; gap:6px;
+    flex:1; max-width:320px;
+    border:1px solid var(--border); border-radius:14px;
+    padding:4px 10px; background:#fafafa;
+  }
+  .search-box input{
+    flex:1; border:none; outline:none; background:transparent;
+    font-family:inherit; font-size:12.5px; color:var(--text); min-width:0;
+  }
+  .search-box .count{ font-size:11px; color:var(--muted); white-space:nowrap; }
+  .search-box button{
+    border:none; background:none; cursor:pointer; color:var(--muted);
+    font-size:13px; padding:0 2px; line-height:1;
+  }
+  .search-box button:hover{ color:var(--text); }
+  .search-box button:disabled{ opacity:.35; cursor:default; }
+
+  /* menu */
+  .menu-wrap{ position:relative; flex:none; }
+  #menuBtn{
+    border:none; background:none; cursor:pointer; color:var(--muted);
+    font-size:16px; padding:4px 8px; letter-spacing:2px;
+  }
+  #menuBtn:hover{ color:var(--text); }
+  #menuDropdown{
+    display:none; position:absolute; top:28px; right:0;
+    background:#fff; border:1px solid var(--border); border-radius:4px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.08);
+    min-width:150px; padding:6px; z-index:20;
+  }
+  #menuDropdown.open{ display:block; }
+
+  /* tabs */
+  #tabs{
+    flex:none; display:flex; align-items:stretch; overflow-x:auto;
+    background:var(--tab-bg); border-bottom:1px solid var(--border);
+  }
+  .tab{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 10px 8px 14px; font-size:12.5px;
+    border-right:1px solid var(--border); color:var(--muted);
+    cursor:pointer; white-space:nowrap; max-width:180px; background:var(--tab-bg);
+  }
+  .tab .t-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .tab.active{ background:#fff; color:var(--text); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
+  .tab .x{ border:none;background:none;color:var(--muted); font-size:13px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:2px; }
+  .tab .x:hover{ color:var(--bad); background:rgba(194,59,59,0.1); }
+  .tab-add{ flex:none; display:flex; align-items:center; justify-content:center; width:38px; color:var(--muted); cursor:pointer; font-size:16px; background:var(--tab-bg); }
+  .tab-add:hover{ color:var(--text); }
+
+  #content{
+    flex:1; width:100%; outline:none; overflow-y:auto;
+    padding:18px 22px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size:14px; line-height:1.6; color:var(--text);
+    white-space:pre-wrap; word-wrap:break-word;
+  }
+  #content:empty:before{
+    content: attr(data-placeholder);
+    color:#aaa;
+  }
+  #content mark, #content [style*="background-color"]{
+    background-color:var(--hi);
+  }
+
+  .statusbar{
+    flex:none; display:flex; justify-content:space-between; align-items:center;
+    padding:6px 12px; border-top:1px solid var(--border);
+    font-size:11.5px; color:var(--muted);
+  }
+
+  #changePwPanel{ display:none; flex:none; border-top:1px solid var(--border); padding:14px 22px; }
+  #changePwPanel .label{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+  #changePwPanel input{max-width:220px;display:inline-block;margin-right:8px;}
+
+  /* custom confirm/info modal (window.confirm/alert are blocked inside this sandbox) */
+  .overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.35);
+    align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .overlay.open{ display:flex; }
+  .overlay-box{
+    background:#fff; border-radius:6px; max-width:340px; width:100%;
+    padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.2);
+  }
+  .overlay-box p{ margin:0 0 18px; font-size:13.5px; color:var(--text); line-height:1.5; }
+  .overlay-actions{ display:flex; justify-content:flex-end; gap:8px; }
+
+  /* floating selection toolbar */
+  #selToolbar{
+    position:fixed; display:none; align-items:center; gap:2px;
+    background:#222; border-radius:6px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    z-index:50;
+  }
+  #selToolbar button{
+    border:none; background:none; color:#fff; cursor:pointer;
+    width:28px; height:26px; border-radius:4px; font-size:13px;
+  }
+  #selToolbar button:hover{ background:rgba(255,255,255,0.15); }
+  #selToolbar button.b{ font-weight:800; }
+  #selToolbar .swatch{
+    width:14px;height:14px;border-radius:3px;background:var(--hi);display:inline-block;
+  }
+</style>
+</head>
+<body>
+
+  <!-- GATE -->
+  <div id="gate">
+    <div class="gate-box">
+      <p class="gate-title">Abrir ou criar sua página</p>
+      <div class="url-row">
+        <span class="prefix">bloco.app/</span>
+        <input id="slugInput" type="text" placeholder="seu-nome" autocomplete="off" spellcheck="false">
+      </div>
+      <button class="btn" id="goBtn">Abrir</button>
+
+      <div id="pwPanel" class="pw-panel"></div>
+      <div id="gateMsg" class="msg"></div>
+      <p class="hint">Novo nome → você cria uma senha. Nome existente → digite a senha para desbloquear.</p>
+    </div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor">
+    <div class="titlebar">
+      <div class="path">bloco.app/<span class="name" id="slugLabel"></span></div>
+
+      <div class="search-box">
+        <span style="color:var(--muted);font-size:12px;">🔎</span>
+        <input id="searchInput" placeholder="Pesquisar no texto..." autocomplete="off">
+        <span class="count" id="searchCount"></span>
+        <button id="searchPrev" title="Anterior">‹</button>
+        <button id="searchNext" title="Próxima">›</button>
+      </div>
+
+      <div class="menu-wrap">
+        <button id="menuBtn" title="Mais opções">⋮</button>
+        <div id="menuDropdown">
+          <button class="link-btn" id="togglePwBtn">Trocar senha</button>
+          <button class="link-btn danger" id="deleteAccountBtn">Excluir conta</button>
+          <button class="link-btn" id="exitBtn">Sair</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tabs"></div>
+
+    <div id="content" contenteditable="true" data-placeholder="Escreva aqui... a primeira palavra vira o título da página" spellcheck="false"></div>
+
+    <div id="changePwPanel">
+      <div class="label">Nova senha</div>
+      <input type="password" id="newPw1" placeholder="nova senha">
+      <input type="password" id="newPw2" placeholder="confirmar">
+      <button class="btn ghost" id="confirmNewPwBtn">Confirmar</button>
+      <div id="pwChangeMsg" class="msg"></div>
+    </div>
+
+    <div class="statusbar">
+      <span id="saveStatus">tudo salvo</span>
+      <span id="pageCount"></span>
+    </div>
+  </div>
+
+  <!-- custom confirm / info modal -->
+  <div id="confirmOverlay" class="overlay">
+    <div class="overlay-box">
+      <p id="confirmMsg"></p>
+      <div class="overlay-actions">
+        <button class="btn ghost" id="confirmCancelBtn">Cancelar</button>
+        <button class="btn solid-danger" id="confirmOkBtn">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="selToolbar">
+    <button class="b" id="btnBold" title="Negrito">B</button>
+    <button class="hi" id="btnHi" title="Marca-texto amarelo"><span class="swatch"></span></button>
+  </div>
+
+<script>
+/* =======================================================================
+   CONFIGURAÇÃO DO SUPABASE
+   Cole aqui a "Project URL" e a chave "anon public" do seu projeto
+   (Project Settings → API no painel do Supabase).
+   ======================================================================= */
+const SUPABASE_URL = 'https://emcmflrwgypbymwsxbqi.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_29ce8F59T5B9S8Zv8IO1Kg_7Fq4dCJC';
+
+const storage = {
+  async get(key){
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/notes?key=eq.${encodeURIComponent(key)}&select=value`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if(!res.ok) throw new Error('Falha ao ler do banco');
+    const rows = await res.json();
+    if(!rows.length) return null;
+    return { value: rows[0].value };
+  },
+  async set(key, value){
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/notes`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ key, value })
+    });
+    if(!res.ok) throw new Error('Falha ao salvar no banco');
+    return true;
+  },
+  async delete(key){
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/notes?key=eq.${encodeURIComponent(key)}`,
+      { method: 'DELETE', headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } }
+    );
+    if(!res.ok) throw new Error('Falha ao excluir do banco');
+    return true;
+  }
+};
+
+const gate = document.getElementById('gate');
+const editor = document.getElementById('editor');
+const slugInput = document.getElementById('slugInput');
+const goBtn = document.getElementById('goBtn');
+const pwPanel = document.getElementById('pwPanel');
+const gateMsg = document.getElementById('gateMsg');
+const slugLabel = document.getElementById('slugLabel');
+const contentEl = document.getElementById('content');
+const saveStatus = document.getElementById('saveStatus');
+const pageCount = document.getElementById('pageCount');
+const exitBtn = document.getElementById('exitBtn');
+const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+const togglePwBtn = document.getElementById('togglePwBtn');
+const changePwPanel = document.getElementById('changePwPanel');
+const confirmNewPwBtn = document.getElementById('confirmNewPwBtn');
+const pwChangeMsg = document.getElementById('pwChangeMsg');
+const tabsEl = document.getElementById('tabs');
+const menuBtn = document.getElementById('menuBtn');
+const menuDropdown = document.getElementById('menuDropdown');
+const searchInput = document.getElementById('searchInput');
+const searchCount = document.getElementById('searchCount');
+const searchPrev = document.getElementById('searchPrev');
+const searchNext = document.getElementById('searchNext');
+const selToolbar = document.getElementById('selToolbar');
+const btnBold = document.getElementById('btnBold');
+const btnHi = document.getElementById('btnHi');
+
+const confirmOverlay = document.getElementById('confirmOverlay');
+const confirmMsg = document.getElementById('confirmMsg');
+const confirmOkBtn = document.getElementById('confirmOkBtn');
+const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+
+let currentSlug = null;
+let currentKey = null;
+let sessionSalt = null;
+
+let pages = [];          // {id, content}  content = innerHTML string
+let activePageId = null;
+let autosaveTimer = null;
+
+function keyFor(slug){ return 'note:' + slug.trim().toLowerCase(); }
+function b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function unb64(str){ return Uint8Array.from(atob(str), c => c.charCodeAt(0)); }
+function newId(){ return Math.random().toString(36).slice(2,10); }
+function htmlToText(html){ const d = document.createElement('div'); d.innerHTML = html || ''; return d.innerText || d.textContent || ''; }
+
+async function deriveKey(password, saltBytes){
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt: saltBytes, iterations: 120000, hash:'SHA-256' },
+    baseKey, { name:'AES-GCM', length:256 }, false, ['encrypt','decrypt']
+  );
+}
+async function encryptPayload(obj, password){
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const enc = new TextEncoder();
+  const cipher = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(obj)));
+  return { payload: JSON.stringify({ s: b64(salt), i: b64(iv), c: b64(cipher) }), key };
+}
+async function decryptPayload(payloadStr, password){
+  const { s, i, c } = JSON.parse(payloadStr);
+  const salt = unb64(s), iv = unb64(i), cipher = unb64(c);
+  const key = await deriveKey(password, salt);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, cipher);
+  const text = new TextDecoder().decode(plain);
+  let obj;
+  try{ obj = JSON.parse(text); }catch(e){ obj = { pages: [{ id:newId(), content:text }] }; }
+  if(!obj.pages || !obj.pages.length) obj.pages = [{ id:newId(), content:'' }];
+  return { obj, key };
+}
+async function reencryptWithKey(obj, key, salt, iv){
+  const enc = new TextEncoder();
+  const cipher = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(obj)));
+  return JSON.stringify({ s: b64(salt), i: b64(iv), c: b64(cipher) });
+}
+
+function clearPwPanel(){ pwPanel.innerHTML = ''; gateMsg.textContent=''; gateMsg.className='msg'; }
+
+/* ---- custom confirm / info modal (native confirm()/alert() don't fire inside this sandbox) ---- */
+function askConfirm(message, okLabel){
+  return new Promise(resolve => {
+    confirmMsg.textContent = message;
+    confirmOkBtn.textContent = okLabel || 'Excluir';
+    confirmCancelBtn.style.display = 'inline-block';
+    confirmOverlay.classList.add('open');
+    function cleanup(result){
+      confirmOverlay.classList.remove('open');
+      confirmOkBtn.removeEventListener('click', onOk);
+      confirmCancelBtn.removeEventListener('click', onCancel);
+      resolve(result);
+    }
+    function onOk(){ cleanup(true); }
+    function onCancel(){ cleanup(false); }
+    confirmOkBtn.addEventListener('click', onOk);
+    confirmCancelBtn.addEventListener('click', onCancel);
+  });
+}
+function askAlert(message){
+  return new Promise(resolve => {
+    confirmMsg.textContent = message;
+    confirmOkBtn.textContent = 'Entendi';
+    confirmCancelBtn.style.display = 'none';
+    confirmOverlay.classList.add('open');
+    function onOk(){
+      confirmOverlay.classList.remove('open');
+      confirmOkBtn.removeEventListener('click', onOk);
+      confirmCancelBtn.style.display = 'inline-block';
+      resolve();
+    }
+    confirmOkBtn.addEventListener('click', onOk);
+  });
+}
+
+goBtn.addEventListener('click', async () => {
+  const slug = slugInput.value.trim().toLowerCase().replace(/[^a-z0-9\-_]/g,'');
+  if(!slug){ gateMsg.textContent = 'Digite um nome de página.'; gateMsg.className='msg bad'; return; }
+  slugInput.value = slug;
+  clearPwPanel();
+  goBtn.disabled = true;
+  let existing = null;
+  try{
+    const res = await storage.get(keyFor(slug));
+    existing = res ? res.value : null;
+  }catch(e){ existing = null; }
+  goBtn.disabled = false;
+  if(existing){ showUnlockPanel(slug, existing); } else { showCreatePanel(slug); }
+});
+
+function showUnlockPanel(slug, payload){
+  pwPanel.innerHTML = `
+    <div class="label">Essa página já existe. Digite a senha:</div>
+    <input type="password" id="unlockPw" placeholder="senha">
+    <div class="row-btns"><button class="btn" id="unlockBtn">Desbloquear</button></div>
+  `;
+  document.getElementById('unlockBtn').addEventListener('click', async () => {
+    const pw = document.getElementById('unlockPw').value;
+    if(!pw) return;
+    try{
+      const { obj, key } = await decryptPayload(payload, pw);
+      const { s } = JSON.parse(payload);
+      currentSlug = slug; currentKey = key; sessionSalt = unb64(s);
+      pages = obj.pages;
+      activePageId = obj.activePageId && pages.find(p=>p.id===obj.activePageId) ? obj.activePageId : pages[0].id;
+      openEditor();
+    }catch(e){
+      gateMsg.textContent = 'Senha incorreta.'; gateMsg.className = 'msg bad';
+    }
+  });
+  document.getElementById('unlockPw').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('unlockBtn').click(); });
+}
+
+function showCreatePanel(slug){
+  pwPanel.innerHTML = `
+    <div class="label">Nome novo. Crie uma senha:</div>
+    <input type="password" id="newPwA" placeholder="senha">
+    <input type="password" id="newPwB" placeholder="confirmar senha">
+    <div class="row-btns"><button class="btn" id="createBtn">Criar página</button></div>
+  `;
+  document.getElementById('createBtn').addEventListener('click', async () => {
+    const a = document.getElementById('newPwA').value;
+    const b = document.getElementById('newPwB').value;
+    if(a.length < 4){ gateMsg.textContent='Use uma senha com pelo menos 4 caracteres.'; gateMsg.className='msg bad'; return; }
+    if(a !== b){ gateMsg.textContent='As senhas não coincidem.'; gateMsg.className='msg bad'; return; }
+    const firstPage = { id:newId(), content:'' };
+    const { payload, key } = await encryptPayload({ pages:[firstPage], activePageId:firstPage.id }, a);
+    try{ await storage.set(keyFor(slug), payload); }
+    catch(e){ gateMsg.textContent='Não consegui salvar. Tente novamente.'; gateMsg.className='msg bad'; return; }
+    const { s } = JSON.parse(payload);
+    currentSlug = slug; currentKey = key; sessionSalt = unb64(s);
+    pages = [firstPage]; activePageId = firstPage.id;
+    openEditor();
+  });
+}
+
+function titleFor(page){
+  const text = htmlToText(page.content);
+  const firstLine = text.split('\n').find(l => l.trim().length > 0) || '';
+  const firstWord = firstLine.trim().split(/\s+/)[0];
+  return firstWord || 'Sem título';
+}
+
+function renderTabs(){
+  tabsEl.innerHTML = '';
+  pages.forEach((p, idx) => {
+    const tab = document.createElement('div');
+    tab.className = 'tab' + (p.id === activePageId ? ' active' : '');
+    const titleSpan = document.createElement('span');
+    titleSpan.className = 't-title';
+    titleSpan.textContent = titleFor(p);
+    tab.appendChild(titleSpan);
+    if(idx !== 0){
+      const x = document.createElement('button');
+      x.className = 'x'; x.textContent = '×'; x.title = 'Excluir esta página';
+      x.addEventListener('click', (ev) => { ev.stopPropagation(); deletePage(p.id); });
+      tab.appendChild(x);
+    }
+    tab.addEventListener('click', () => switchToPage(p.id));
+    tabsEl.appendChild(tab);
+  });
+  const addTab = document.createElement('div');
+  addTab.className = 'tab-add'; addTab.textContent = '+'; addTab.title = 'Nova página';
+  addTab.addEventListener('click', addPage);
+  tabsEl.appendChild(addTab);
+  pageCount.textContent = pages.length + (pages.length === 1 ? ' página' : ' páginas');
+}
+
+function switchToPage(id){
+  if(id === activePageId) return;
+  syncActiveContentFromEditor();
+  activePageId = id;
+  const p = pages.find(x => x.id === id);
+  contentEl.innerHTML = p ? p.content : '';
+  renderTabs();
+  contentEl.focus();
+}
+function syncActiveContentFromEditor(){
+  const p = pages.find(x => x.id === activePageId);
+  if(p) p.content = contentEl.innerHTML;
+}
+function addPage(){
+  syncActiveContentFromEditor();
+  const p = { id:newId(), content:'' };
+  pages.push(p); activePageId = p.id;
+  contentEl.innerHTML = '';
+  renderTabs(); contentEl.focus();
+  scheduleAutosave();
+}
+
+async function deletePage(id){
+  if(pages.length && pages[0].id === id){
+    await askAlert('A primeira página não pode ser excluída.');
+    return;
+  }
+  if(pages.length === 1){
+    await askAlert('Precisa ter pelo menos uma página. Escreva algo novo em vez de excluir.');
+    return;
+  }
+  const page = pages.find(p => p.id === id);
+  const label = titleFor(page);
+  const ok = await askConfirm(`Tem certeza que quer excluir a página "${label}"? Essa ação não pode ser desfeita.`, 'Excluir página');
+  if(!ok) return;
+  const idx = pages.findIndex(p => p.id === id);
+  pages.splice(idx, 1);
+  if(activePageId === id){
+    const next = pages[Math.max(0, idx - 1)];
+    activePageId = next.id;
+    contentEl.innerHTML = next.content;
+  }
+  renderTabs();
+  scheduleAutosave();
+}
+
+function openEditor(){
+  gate.style.display = 'none';
+  editor.style.display = 'flex';
+  slugLabel.textContent = currentSlug;
+  const active = pages.find(p => p.id === activePageId);
+  contentEl.innerHTML = active ? active.content : '';
+  saveStatus.textContent = 'tudo salvo';
+  changePwPanel.style.display = 'none';
+  renderTabs();
+  contentEl.focus();
+}
+
+function scheduleAutosave(){
+  saveStatus.textContent = 'alterações não salvas';
+  clearTimeout(autosaveTimer);
+  autosaveTimer = setTimeout(doAutosave, 800);
+}
+contentEl.addEventListener('input', () => {
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+});
+async function doAutosave(){
+  syncActiveContentFromEditor();
+  saveStatus.textContent = 'salvando…';
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const payload = await reencryptWithKey({ pages, activePageId }, currentKey, sessionSalt, iv);
+  try{
+    await storage.set(keyFor(currentSlug), payload);
+    saveStatus.textContent = 'tudo salvo · ' + new Date().toLocaleTimeString();
+  }catch(e){ saveStatus.textContent = 'erro ao salvar'; }
+}
+
+exitBtn.addEventListener('click', async () => {
+  clearTimeout(autosaveTimer);
+  await doAutosave();
+  currentSlug = null; currentKey = null; sessionSalt = null;
+  pages = []; activePageId = null;
+  editor.style.display = 'none';
+  gate.style.display = 'flex';
+  slugInput.value = '';
+  clearPwPanel();
+  menuDropdown.classList.remove('open');
+});
+
+deleteAccountBtn.addEventListener('click', async () => {
+  const ok = await askConfirm('Excluir esta conta e TODAS as páginas dela? Não dá para desfazer.', 'Excluir conta');
+  if(!ok) return;
+  clearTimeout(autosaveTimer);
+  try{ await storage.delete(keyFor(currentSlug)); }catch(e){}
+  currentSlug = null; currentKey = null; sessionSalt = null;
+  pages = []; activePageId = null;
+  editor.style.display = 'none';
+  gate.style.display = 'flex';
+  slugInput.value = '';
+  clearPwPanel();
+  menuDropdown.classList.remove('open');
+});
+
+togglePwBtn.addEventListener('click', () => {
+  menuDropdown.classList.remove('open');
+  changePwPanel.style.display = changePwPanel.style.display === 'block' ? 'none' : 'block';
+});
+confirmNewPwBtn.addEventListener('click', async () => {
+  const a = document.getElementById('newPw1').value;
+  const b = document.getElementById('newPw2').value;
+  if(a.length < 4){ pwChangeMsg.textContent='Use pelo menos 4 caracteres.'; pwChangeMsg.className='msg bad'; return; }
+  if(a !== b){ pwChangeMsg.textContent='As senhas não coincidem.'; pwChangeMsg.className='msg bad'; return; }
+  syncActiveContentFromEditor();
+  const { payload, key } = await encryptPayload({ pages, activePageId }, a);
+  try{
+    await storage.set(keyFor(currentSlug), payload);
+    const { s } = JSON.parse(payload);
+    currentKey = key; sessionSalt = unb64(s);
+    pwChangeMsg.textContent = 'Senha alterada.'; pwChangeMsg.className='msg good';
+    document.getElementById('newPw1').value=''; document.getElementById('newPw2').value='';
+  }catch(e){ pwChangeMsg.textContent = 'Erro ao salvar.'; pwChangeMsg.className='msg bad'; }
+});
+
+slugInput.addEventListener('keydown', e => { if(e.key==='Enter') goBtn.click(); });
+
+/* ---- menu dropdown ---- */
+menuBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  menuDropdown.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if(!menuDropdown.contains(e.target) && e.target !== menuBtn){
+    menuDropdown.classList.remove('open');
+  }
+});
+
+/* ---- search ---- */
+let matches = []; // {node, start, end}
+let matchIndex = -1;
+
+function collectTextNodes(root){
+  const nodes = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  let n;
+  while(n = walker.nextNode()) nodes.push(n);
+  return nodes;
+}
+function computeMatches(query){
+  matches = [];
+  matchIndex = -1;
+  if(!query) { updateSearchUI(); return; }
+  const q = query.toLowerCase();
+  const nodes = collectTextNodes(contentEl);
+  nodes.forEach(node => {
+    const text = node.textContent.toLowerCase();
+    let from = 0, idx;
+    while((idx = text.indexOf(q, from)) !== -1){
+      matches.push({ node, start: idx, end: idx + q.length });
+      from = idx + q.length;
+    }
+  });
+  if(matches.length) matchIndex = 0;
+  updateSearchUI();
+  if(matchIndex >= 0) goToMatch(matchIndex);
+}
+function goToMatch(i){
+  if(!matches.length) return;
+  matchIndex = ((i % matches.length) + matches.length) % matches.length;
+  const m = matches[matchIndex];
+  const range = document.createRange();
+  range.setStart(m.node, m.start);
+  range.setEnd(m.node, m.end);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  const el = m.node.parentElement;
+  if(el && el.scrollIntoView) el.scrollIntoView({ block:'center', behavior:'smooth' });
+  updateSearchUI();
+}
+function updateSearchUI(){
+  if(!matches.length){
+    searchCount.textContent = searchInput.value ? '0/0' : '';
+  }else{
+    searchCount.textContent = (matchIndex+1) + '/' + matches.length;
+  }
+  searchPrev.disabled = matches.length === 0;
+  searchNext.disabled = matches.length === 0;
+}
+searchInput.addEventListener('input', () => computeMatches(searchInput.value.trim()));
+searchInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){ e.preventDefault(); goToMatch(matchIndex + (e.shiftKey ? -1 : 1)); }
+});
+searchNext.addEventListener('click', () => goToMatch(matchIndex + 1));
+searchPrev.addEventListener('click', () => goToMatch(matchIndex - 1));
+
+/* ---- selection formatting toolbar ---- */
+function showSelToolbar(){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0 || sel.isCollapsed){ hideSelToolbar(); return; }
+  const anchor = sel.anchorNode;
+  if(!anchor || !contentEl.contains(anchor)){ hideSelToolbar(); return; }
+  const rect = sel.getRangeAt(0).getBoundingClientRect();
+  if(rect.width === 0 && rect.height === 0){ hideSelToolbar(); return; }
+  selToolbar.style.display = 'flex';
+  const top = rect.top - 38;
+  const left = rect.left + rect.width/2 - 30;
+  selToolbar.style.top = Math.max(6, top) + 'px';
+  selToolbar.style.left = Math.max(6, left) + 'px';
+}
+function hideSelToolbar(){ selToolbar.style.display = 'none'; }
+
+document.addEventListener('selectionchange', () => {
+  const sel = window.getSelection();
+  if(sel && !sel.isCollapsed && sel.anchorNode && contentEl.contains(sel.anchorNode)){
+    showSelToolbar();
+  }else{
+    hideSelToolbar();
+  }
+});
+contentEl.addEventListener('mouseup', showSelToolbar);
+contentEl.addEventListener('keyup', showSelToolbar);
+
+btnBold.addEventListener('mousedown', (e) => { e.preventDefault(); document.execCommand('bold'); });
+btnHi.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  document.execCommand('hiliteColor', false, '#fff59d') || document.execCommand('backColor', false, '#fff59d');
+});
+selToolbar.addEventListener('mousedown', (e) => e.preventDefault());
+</script>
+</body>
+</html>
