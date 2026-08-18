@@ -200,12 +200,14 @@
   #selToolbar button{
     border:none; background:none; color:#fff; cursor:pointer;
     width:28px; height:26px; border-radius:4px; font-size:13px;
+    display:flex; align-items:center; justify-content:center;
   }
   #selToolbar button:hover{ background:rgba(255,255,255,0.15); }
   #selToolbar button.b{ font-weight:800; }
   #selToolbar .swatch{
     width:14px;height:14px;border-radius:3px;background:var(--hi);display:inline-block;
   }
+  #selToolbar #btnClear{ border-left:1px solid rgba(255,255,255,0.15); margin-left:2px; padding-left:6px; width:30px; }
 
   /* ---------------- TOUR GUIADO ---------------- */
   #tourRoot{ display:none; }
@@ -323,6 +325,12 @@
   <div id="selToolbar">
     <button class="b" id="btnBold" title="Negrito">B</button>
     <button class="hi" id="btnHi" title="Marca-texto amarelo"><span class="swatch"></span></button>
+    <button id="btnClear" title="Limpar formatação">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L21 10C21.5 10.5 21.5 11.5 21 12L11 22" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8.5 8.5L15.5 15.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
 
   <!-- TOUR GUIADO -->
@@ -417,6 +425,7 @@ const searchNext = document.getElementById('searchNext');
 const selToolbar = document.getElementById('selToolbar');
 const btnBold = document.getElementById('btnBold');
 const btnHi = document.getElementById('btnHi');
+const btnClear = document.getElementById('btnClear');
 
 const startTourBtn = document.getElementById('startTourBtn');
 const tourRoot = document.getElementById('tourRoot');
@@ -848,6 +857,31 @@ btnBold.addEventListener('mousedown', (e) => { e.preventDefault(); document.exec
 btnHi.addEventListener('mousedown', (e) => {
   e.preventDefault();
   document.execCommand('hiliteColor', false, '#fff59d') || document.execCommand('backColor', false, '#fff59d');
+});
+btnClear.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  document.execCommand('removeFormat');
+  // reforço: remove qualquer resquício de marca-texto/negrito que o removeFormat não pegue
+  const sel = window.getSelection();
+  if(sel && sel.rangeCount && !sel.isCollapsed){
+    const range = sel.getRangeAt(0);
+    let node = range.commonAncestorContainer;
+    if(node.nodeType !== 1) node = node.parentElement;
+    if(node && contentEl.contains(node)){
+      node.querySelectorAll('mark, b, strong, [style*="background-color"], [style*="font-weight"]').forEach(el => {
+        if(!range.intersectsNode(el)) return;
+        el.style.backgroundColor = '';
+        el.style.fontWeight = '';
+        if(el.tagName === 'MARK' || el.tagName === 'B' || el.tagName === 'STRONG'){
+          const parent = el.parentNode;
+          while(el.firstChild) parent.insertBefore(el.firstChild, el);
+          parent.removeChild(el);
+        }
+      });
+    }
+  }
+  syncActiveContentFromEditor();
+  scheduleAutosave();
 });
 selToolbar.addEventListener('mousedown', (e) => e.preventDefault());
 
