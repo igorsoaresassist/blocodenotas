@@ -69,12 +69,15 @@
   /* ---------------- EDITOR ---------------- */
   #editor{ display:none; flex-direction:column; height:100vh; position:relative; }
   .titlebar{
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; justify-content:flex-start;
     padding:6px 10px; border-bottom:1px solid var(--border);
     font-size:12.5px; color:var(--muted); flex:none; gap:10px;
   }
   .titlebar .name{color:var(--text);font-weight:600;}
-  .titlebar .path{flex:none; white-space:nowrap;}
+  .titlebar .path{
+    flex:none; white-space:nowrap;
+    overflow:hidden; text-overflow:ellipsis; max-width:40vw;
+  }
 
   .link-btn{
     background:none;border:none;cursor:pointer;
@@ -88,7 +91,8 @@
   /* search */
   .search-box{
     display:flex; align-items:center; gap:6px;
-    flex:1; max-width:320px;
+    flex:0 1 320px; max-width:320px;
+    margin-left:auto;
     border:1px solid var(--border); border-radius:14px;
     padding:4px 10px; background:#fafafa;
   }
@@ -103,6 +107,18 @@
   }
   .search-box button:hover{ color:var(--text); }
   .search-box button:disabled{ opacity:.35; cursor:default; }
+
+  /* responsividade da barra de título em telas pequenas */
+  @media (max-width: 600px){
+    .titlebar{ padding:6px 8px; gap:6px; }
+    .titlebar .path{ max-width:28vw; font-size:11.5px; }
+    .search-box{ flex:0 1 150px; max-width:150px; padding:4px 8px; }
+    .search-box .count{ display:none; }
+  }
+  @media (max-width: 420px){
+    .titlebar .path{ max-width:22vw; }
+    .search-box{ flex:0 1 110px; max-width:110px; gap:4px; }
+  }
 
   /* menu */
   .menu-wrap{ position:relative; flex:none; }
@@ -190,6 +206,47 @@
   #selToolbar .swatch{
     width:14px;height:14px;border-radius:3px;background:var(--hi);display:inline-block;
   }
+
+  /* ---------------- TOUR GUIADO ---------------- */
+  #tourRoot{ display:none; }
+  #tourRoot.open{ display:block; }
+  #tourBackdrop{
+    position:fixed; inset:0; z-index:300;
+    background:rgba(20,20,20,0.45);
+    -webkit-backdrop-filter:blur(4px);
+    backdrop-filter:blur(4px);
+    transition:clip-path .25s ease;
+  }
+  #tourRing{
+    position:fixed; z-index:301; pointer-events:none;
+    border:2px solid #fff; border-radius:10px;
+    box-shadow:0 0 0 3px rgba(47,111,237,0.55), 0 4px 18px rgba(0,0,0,0.3);
+    transition:top .25s ease, left .25s ease, width .25s ease, height .25s ease;
+  }
+  #tourPopup{
+    position:fixed; z-index:302; width:270px; max-width:calc(100vw - 20px);
+    background:#fff; border-radius:8px; padding:16px;
+    box-shadow:0 12px 30px rgba(0,0,0,0.3);
+    transition:top .25s ease, left .25s ease;
+  }
+  #tourStepLabel{
+    font-size:10.5px; font-weight:700; letter-spacing:.5px; text-transform:uppercase;
+    color:var(--accent); margin-bottom:6px;
+  }
+  #tourTitle{ font-size:14.5px; font-weight:700; color:var(--text); margin-bottom:6px; }
+  #tourText{ font-size:12.5px; color:var(--text); line-height:1.55; margin-bottom:16px; }
+  .tour-actions{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  #tourSkipBtn{
+    background:none; border:none; cursor:pointer; font-family:inherit;
+    font-size:12px; color:var(--muted); padding:6px 2px;
+  }
+  #tourSkipBtn:hover{ color:var(--text); text-decoration:underline; }
+  #tourNextBtn{
+    font-family:inherit; font-size:12.5px; font-weight:600;
+    border:1px solid var(--text); background:var(--text); color:#fff;
+    border-radius:4px; padding:8px 16px; cursor:pointer; flex:none;
+  }
+  #tourNextBtn:hover{ opacity:.85; }
 </style>
 </head>
 <body>
@@ -226,6 +283,7 @@
       <div class="menu-wrap">
         <button id="menuBtn" title="Mais opções">⋮</button>
         <div id="menuDropdown">
+          <button class="link-btn" id="startTourBtn">Como usar o site</button>
           <button class="link-btn" id="togglePwBtn">Trocar senha</button>
           <button class="link-btn danger" id="deleteAccountBtn">Excluir conta</button>
           <button class="link-btn" id="exitBtn">Sair</button>
@@ -265,6 +323,28 @@
   <div id="selToolbar">
     <button class="b" id="btnBold" title="Negrito">B</button>
     <button class="hi" id="btnHi" title="Marca-texto amarelo"><span class="swatch"></span></button>
+  </div>
+
+  <!-- TOUR GUIADO -->
+  <div id="tourRoot">
+    <svg width="0" height="0" style="position:absolute;">
+      <defs>
+        <clipPath id="tourClipPath" clipPathUnits="userSpaceOnUse">
+          <path id="tourClipPathShape" clip-rule="evenodd" fill-rule="evenodd"/>
+        </clipPath>
+      </defs>
+    </svg>
+    <div id="tourBackdrop" style="clip-path:url(#tourClipPath);"></div>
+    <div id="tourRing"></div>
+    <div id="tourPopup">
+      <div id="tourStepLabel"></div>
+      <div id="tourTitle"></div>
+      <div id="tourText"></div>
+      <div class="tour-actions">
+        <button id="tourSkipBtn">Pular</button>
+        <button id="tourNextBtn">Próximo</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -337,6 +417,17 @@ const searchNext = document.getElementById('searchNext');
 const selToolbar = document.getElementById('selToolbar');
 const btnBold = document.getElementById('btnBold');
 const btnHi = document.getElementById('btnHi');
+
+const startTourBtn = document.getElementById('startTourBtn');
+const tourRoot = document.getElementById('tourRoot');
+const tourClipPathShape = document.getElementById('tourClipPathShape');
+const tourRing = document.getElementById('tourRing');
+const tourPopup = document.getElementById('tourPopup');
+const tourStepLabel = document.getElementById('tourStepLabel');
+const tourTitle = document.getElementById('tourTitle');
+const tourText = document.getElementById('tourText');
+const tourSkipBtn = document.getElementById('tourSkipBtn');
+const tourNextBtn = document.getElementById('tourNextBtn');
 
 const confirmOverlay = document.getElementById('confirmOverlay');
 const confirmMsg = document.getElementById('confirmMsg');
@@ -576,6 +667,7 @@ function openEditor(){
   changePwPanel.style.display = 'none';
   renderTabs();
   contentEl.focus();
+  maybeStartTour();
 }
 
 function scheduleAutosave(){
@@ -661,6 +753,7 @@ document.addEventListener('click', (e) => {
 /* ---- search ---- */
 let matches = []; // {node, start, end}
 let matchIndex = -1;
+let hasNavigated = false; // só vira true quando o usuário navega de fato (Enter/setas)
 
 function collectTextNodes(root){
   const nodes = [];
@@ -672,6 +765,7 @@ function collectTextNodes(root){
 function computeMatches(query){
   matches = [];
   matchIndex = -1;
+  hasNavigated = false;
   if(!query) { updateSearchUI(); return; }
   const q = query.toLowerCase();
   const nodes = collectTextNodes(contentEl);
@@ -684,12 +778,13 @@ function computeMatches(query){
     }
   });
   if(matches.length) matchIndex = 0;
+  // Apenas atualiza a contagem (ex: "3/12"); NÃO move cursor/seleção enquanto digita.
   updateSearchUI();
-  if(matchIndex >= 0) goToMatch(matchIndex);
 }
 function goToMatch(i){
   if(!matches.length) return;
   matchIndex = ((i % matches.length) + matches.length) % matches.length;
+  hasNavigated = true;
   const m = matches[matchIndex];
   const range = document.createRange();
   range.setStart(m.node, m.start);
@@ -700,6 +795,11 @@ function goToMatch(i){
   const el = m.node.parentElement;
   if(el && el.scrollIntoView) el.scrollIntoView({ block:'center', behavior:'smooth' });
   updateSearchUI();
+}
+function navigate(direction){
+  // primeira navegação vai para o match atual (0); as seguintes avançam/recuam
+  if(!hasNavigated){ goToMatch(matchIndex); }
+  else { goToMatch(matchIndex + direction); }
 }
 function updateSearchUI(){
   if(!matches.length){
@@ -712,10 +812,10 @@ function updateSearchUI(){
 }
 searchInput.addEventListener('input', () => computeMatches(searchInput.value.trim()));
 searchInput.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter'){ e.preventDefault(); goToMatch(matchIndex + (e.shiftKey ? -1 : 1)); }
+  if(e.key === 'Enter'){ e.preventDefault(); navigate(e.shiftKey ? -1 : 1); }
 });
-searchNext.addEventListener('click', () => goToMatch(matchIndex + 1));
-searchPrev.addEventListener('click', () => goToMatch(matchIndex - 1));
+searchNext.addEventListener('click', () => navigate(1));
+searchPrev.addEventListener('click', () => navigate(-1));
 
 /* ---- selection formatting toolbar ---- */
 function showSelToolbar(){
@@ -750,6 +850,130 @@ btnHi.addEventListener('mousedown', (e) => {
   document.execCommand('hiliteColor', false, '#fff59d') || document.execCommand('backColor', false, '#fff59d');
 });
 selToolbar.addEventListener('mousedown', (e) => e.preventDefault());
+
+/* ---- tour guiado (primeira experiência) ---- */
+const tourSteps = [
+  {
+    selector: '#content',
+    title: 'Sua página',
+    text: 'Aqui é onde você escreve. A primeira palavra que você digitar vira automaticamente o título desta página.'
+  },
+  {
+    selector: '#content',
+    title: 'Negrito e marca-texto',
+    text: 'Selecione um trecho do texto (com o mouse ou o dedo) para ver os botões de negrito e marca-texto amarelo aparecerem.'
+  },
+  {
+    selector: '.tab-add',
+    title: 'Várias páginas',
+    text: 'Clique no + para criar uma nova página. Cada uma vira uma aba aqui em cima, e você pode alternar entre elas quando quiser.'
+  },
+  {
+    selector: '.search-box',
+    title: 'Buscar no texto',
+    text: 'Digite uma palavra para ver quantas vezes ela aparece. Aperte Enter (ou clique nas setinhas ‹ ›) para pular de uma ocorrência para a próxima.'
+  },
+  {
+    selector: '#menuBtn',
+    title: 'Mais opções',
+    text: 'Aqui você troca sua senha, sai da conta ou exclui tudo, se um dia precisar.'
+  },
+  {
+    selector: '.statusbar',
+    title: 'Salvamento automático',
+    text: 'Tudo que você escreve é salvo sozinho, poucos instantes depois de parar de digitar. Não precisa clicar em nada.'
+  }
+];
+let tourIndex = 0;
+let tourActive = false;
+
+function maybeStartTour(){
+  let done = '0';
+  try{ done = localStorage.getItem('blocoTourDone') || '0'; }catch(e){}
+  if(done === '1') return;
+  setTimeout(startTour, 500);
+}
+
+function startTour(){
+  menuDropdown.classList.remove('open');
+  tourIndex = 0;
+  tourActive = true;
+  tourRoot.classList.add('open');
+  showTourStep();
+  window.addEventListener('resize', onTourReposition);
+  window.addEventListener('scroll', onTourReposition, true);
+}
+
+function onTourReposition(){
+  if(!tourActive) return;
+  positionTourFor(tourSteps[tourIndex].selector);
+}
+
+function endTour(){
+  tourActive = false;
+  tourRoot.classList.remove('open');
+  window.removeEventListener('resize', onTourReposition);
+  window.removeEventListener('scroll', onTourReposition, true);
+  try{ localStorage.setItem('blocoTourDone', '1'); }catch(e){}
+}
+
+function showTourStep(){
+  const step = tourSteps[tourIndex];
+  const target = document.querySelector(step.selector);
+  if(!target){ nextTourStep(); return; }
+  tourStepLabel.textContent = 'Passo ' + (tourIndex+1) + ' de ' + tourSteps.length;
+  tourTitle.textContent = step.title;
+  tourText.textContent = step.text;
+  tourNextBtn.textContent = (tourIndex === tourSteps.length - 1) ? 'Concluir' : 'Próximo';
+  positionTourFor(step.selector);
+}
+
+function positionTourFor(selector){
+  const target = document.querySelector(selector);
+  if(!target) return;
+  const rect = target.getBoundingClientRect();
+  const pad = 8;
+  const W = window.innerWidth, H = window.innerHeight;
+  const x = Math.max(4, rect.left - pad);
+  const y = Math.max(4, rect.top - pad);
+  const w = Math.min(W - x - 4, rect.width + pad*2);
+  const h = Math.min(H - y - 4, rect.height + pad*2);
+
+  // recorta o fundo desfocado deixando um "buraco" nítido sobre o alvo
+  const d = `M0,0 H${W} V${H} H0 Z M${x},${y} H${x+w} V${y+h} H${x} Z`;
+  tourClipPathShape.setAttribute('d', d);
+
+  tourRing.style.left = x + 'px';
+  tourRing.style.top = y + 'px';
+  tourRing.style.width = w + 'px';
+  tourRing.style.height = h + 'px';
+
+  // posiciona o popup embaixo do alvo; se não couber, coloca em cima
+  const popupWidth = 270;
+  const estimatedPopupHeight = tourPopup.offsetHeight || 150;
+  let popTop = y + h + 14;
+  if(popTop + estimatedPopupHeight > H - 10){
+    popTop = Math.max(10, y - estimatedPopupHeight - 14);
+  }
+  let popLeft = x;
+  if(popLeft + popupWidth > W - 10) popLeft = W - popupWidth - 10;
+  if(popLeft < 10) popLeft = 10;
+  tourPopup.style.top = popTop + 'px';
+  tourPopup.style.left = popLeft + 'px';
+}
+
+function nextTourStep(){
+  if(tourIndex >= tourSteps.length - 1){ endTour(); return; }
+  tourIndex++;
+  showTourStep();
+}
+
+tourNextBtn.addEventListener('click', nextTourStep);
+tourSkipBtn.addEventListener('click', endTour);
+startTourBtn.addEventListener('click', () => {
+  menuDropdown.classList.remove('open');
+  startTour();
+});
 </script>
 </body>
 </html>
