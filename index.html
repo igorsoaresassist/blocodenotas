@@ -3,8 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <title>Bloco de Notas</title>
+<script>
+  /* aplica o tema salvo antes de pintar a página, para não piscar */
+  (function(){
+    try{
+      if(localStorage.getItem('blocoDark') === '1'){
+        document.documentElement.classList.add('dark');
+      }
+    }catch(e){}
+  })();
+</script>
 <style>
   :root{
+    --bg:#ffffff;
+    --panel-bg:#ffffff;
+    --search-bg:#fafafa;
+    --placeholder:#aaaaaa;
     --border:#d9d9d9;
     --text:#1a1a1a;
     --muted:#8a8a8a;
@@ -14,11 +28,26 @@
     --tab-bg:#f4f4f4;
     --hi:#fff59d;
   }
+  html.dark{
+    --bg:#000000;
+    --panel-bg:#141310;
+    --search-bg:#141310;
+    --placeholder:#6b6350;
+    --border:#3a3527;
+    --text:#f4ecd2;
+    --muted:#a89a78;
+    --accent:#5b9dff;
+    --bad:#e5605c;
+    --good:#4caf6e;
+    --tab-bg:#141310;
+    --hi:#fff59d;
+  }
   *{box-sizing:border-box;}
   html,body{height:100%;}
+  html{ background:var(--bg); }
   body{
     margin:0;
-    background:#ffffff;
+    background:var(--bg);
     color:var(--text);
     font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Arial, sans-serif;
     display:flex;
@@ -47,12 +76,12 @@
   input:focus{border-color:var(--accent);}
   .btn{
     font-family:inherit; font-size:13px; font-weight:600;
-    border:1px solid var(--text); background:var(--text); color:#fff;
+    border:1px solid var(--text); background:var(--text); color:var(--bg);
     border-radius:2px; padding:9px 16px; cursor:pointer;
   }
   .btn:hover{opacity:.85;}
   .btn:active{opacity:.7;}
-  .btn.ghost{ background:#fff; color:var(--text); border:1px solid var(--border); }
+  .btn.ghost{ background:var(--panel-bg); color:var(--text); border:1px solid var(--border); }
   .btn.ghost:hover{border-color:var(--text);}
   .btn.solid-danger{ background:var(--bad); color:#fff; border:1px solid var(--bad); }
   .btn.solid-danger:hover{ opacity:.9; }
@@ -94,7 +123,7 @@
     flex:0 1 320px; max-width:320px;
     margin-left:auto;
     border:1px solid var(--border); border-radius:14px;
-    padding:4px 10px; background:#fafafa;
+    padding:4px 10px; background:var(--search-bg);
   }
   .search-box input{
     flex:1; border:none; outline:none; background:transparent;
@@ -129,7 +158,7 @@
   #menuBtn:hover{ color:var(--text); }
   #menuDropdown{
     display:none; position:absolute; top:28px; right:0;
-    background:#fff; border:1px solid var(--border); border-radius:4px;
+    background:var(--panel-bg); border:1px solid var(--border); border-radius:4px;
     box-shadow:0 4px 14px rgba(0,0,0,0.08);
     min-width:150px; padding:6px; z-index:20;
   }
@@ -147,7 +176,7 @@
     cursor:pointer; white-space:nowrap; max-width:180px; background:var(--tab-bg);
   }
   .tab .t-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .tab.active{ background:#fff; color:var(--text); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
+  .tab.active{ background:var(--panel-bg); color:var(--text); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
   .tab .x{ border:none;background:none;color:var(--muted); font-size:13px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:2px; }
   .tab .x:hover{ color:var(--bad); background:rgba(194,59,59,0.1); }
   .tab-add{ flex:none; display:flex; align-items:center; justify-content:center; width:38px; color:var(--muted); cursor:pointer; font-size:16px; background:var(--tab-bg); }
@@ -156,16 +185,47 @@
   #content{
     flex:1; width:100%; outline:none; overflow-y:auto;
     padding:18px 22px;
-    font-family: Consolas, "Courier New", monospace;
-    font-size:14px; line-height:1.6; color:var(--text);
+    font-family: Consolas, "Courier New", monospace !important;
+    font-size:14px !important; line-height:1.6; color:var(--text);
     white-space:pre-wrap; word-wrap:break-word;
+    position:relative;
+  }
+  #content, #content *{
+    font-family: Consolas, "Courier New", monospace !important;
+    font-size:14px !important;
   }
   #content:empty:before{
     content: attr(data-placeholder);
-    color:#aaa;
+    color:var(--placeholder);
   }
   #content mark, #content [style*="background-color"]{
     background-color:var(--hi);
+    color:#1a1a1a;
+  }
+
+  /* imagens coladas: movíveis e redimensionáveis */
+  #content .img-wrap{
+    position:absolute;
+    cursor:move;
+    user-select:none;
+    -webkit-user-select:none;
+    line-height:0;
+    z-index:1;
+  }
+  #content .img-wrap img{
+    display:block; width:100%; height:auto;
+    pointer-events:none;
+    border-radius:2px;
+  }
+  #content .img-wrap .img-resize-handle{
+    position:absolute; right:-7px; bottom:-7px;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--accent); border:2px solid var(--bg);
+    cursor:nwse-resize;
+  }
+  #content .img-wrap.dragging,
+  #content .img-wrap.resizing{
+    opacity:.85;
   }
 
   .statusbar{
@@ -185,7 +245,7 @@
   }
   .overlay.open{ display:flex; }
   .overlay-box{
-    background:#fff; border-radius:6px; max-width:340px; width:100%;
+    background:var(--panel-bg); border-radius:6px; max-width:340px; width:100%;
     padding:20px; box-shadow:0 10px 30px rgba(0,0,0,0.2);
   }
   .overlay-box p{ margin:0 0 18px; font-size:13.5px; color:var(--text); line-height:1.5; }
@@ -227,7 +287,7 @@
   }
   #tourPopup{
     position:fixed; z-index:302; width:270px; max-width:calc(100vw - 20px);
-    background:#fff; border-radius:8px; padding:16px;
+    background:var(--panel-bg); border-radius:8px; padding:16px;
     box-shadow:0 12px 30px rgba(0,0,0,0.3);
     transition:top .25s ease, left .25s ease;
   }
@@ -286,6 +346,7 @@
         <button id="menuBtn" title="Mais opções">⋮</button>
         <div id="menuDropdown">
           <button class="link-btn" id="startTourBtn">Como usar o site</button>
+          <button class="link-btn" id="themeToggleBtn">Modo escuro</button>
           <button class="link-btn" id="togglePwBtn">Trocar senha</button>
           <button class="link-btn danger" id="deleteAccountBtn">Excluir conta</button>
           <button class="link-btn" id="exitBtn">Sair</button>
@@ -427,6 +488,7 @@ const btnBold = document.getElementById('btnBold');
 const btnHi = document.getElementById('btnHi');
 const btnClear = document.getElementById('btnClear');
 
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 const startTourBtn = document.getElementById('startTourBtn');
 const tourRoot = document.getElementById('tourRoot');
 const tourClipPathShape = document.getElementById('tourClipPathShape');
@@ -626,6 +688,7 @@ function switchToPage(id){
   activePageId = id;
   const p = pages.find(x => x.id === id);
   contentEl.innerHTML = p ? p.content : '';
+  reattachContentImages();
   renderTabs();
   contentEl.focus();
 }
@@ -661,6 +724,7 @@ async function deletePage(id){
     const next = pages[Math.max(0, idx - 1)];
     activePageId = next.id;
     contentEl.innerHTML = next.content;
+    reattachContentImages();
   }
   renderTabs();
   scheduleAutosave();
@@ -672,6 +736,7 @@ function openEditor(){
   slugLabel.textContent = currentSlug;
   const active = pages.find(p => p.id === activePageId);
   contentEl.innerHTML = active ? active.content : '';
+  reattachContentImages();
   saveStatus.textContent = 'tudo salvo';
   changePwPanel.style.display = 'none';
   renderTabs();
@@ -747,6 +812,18 @@ confirmNewPwBtn.addEventListener('click', async () => {
 });
 
 slugInput.addEventListener('keydown', e => { if(e.key==='Enter') goBtn.click(); });
+
+/* ---- modo claro / escuro ---- */
+function applyTheme(dark){
+  document.documentElement.classList.toggle('dark', dark);
+  try{ localStorage.setItem('blocoDark', dark ? '1' : '0'); }catch(e){}
+  themeToggleBtn.textContent = dark ? 'Modo claro' : 'Modo escuro';
+}
+themeToggleBtn.textContent = document.documentElement.classList.contains('dark') ? 'Modo claro' : 'Modo escuro';
+themeToggleBtn.addEventListener('click', () => {
+  menuDropdown.classList.remove('open');
+  applyTheme(!document.documentElement.classList.contains('dark'));
+});
 
 /* ---- menu dropdown ---- */
 menuBtn.addEventListener('click', (e) => {
@@ -884,6 +961,191 @@ btnClear.addEventListener('mousedown', (e) => {
   scheduleAutosave();
 });
 selToolbar.addEventListener('mousedown', (e) => e.preventDefault());
+
+/* ---------------------------------------------------------------
+   COLAR TEXTO: sempre com a fonte/tamanho padrão do bloco
+   (mantém apenas negrito e marca-texto, ignora fonte, tamanho,
+   cor e qualquer outra formatação vinda de fora)
+--------------------------------------------------------------- */
+const BLOCK_TAGS = new Set(['P','DIV','LI','TR','H1','H2','H3','H4','H5','H6','BLOCKQUOTE']);
+
+function isHighlighted(node){
+  const bg = node.style && node.style.backgroundColor;
+  return node.tagName === 'MARK' || (bg && bg !== '' && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)');
+}
+function isBold(node){
+  if(node.tagName === 'B' || node.tagName === 'STRONG') return true;
+  const w = node.style && node.style.fontWeight;
+  if(!w) return false;
+  const n = parseInt(w, 10);
+  return w === 'bold' || (!isNaN(n) && n >= 600);
+}
+
+function sanitizeIntoFragment(srcParent, destParent){
+  srcParent.childNodes.forEach(node => {
+    if(node.nodeType === Node.TEXT_NODE){
+      destParent.appendChild(document.createTextNode(node.textContent));
+      return;
+    }
+    if(node.nodeType !== Node.ELEMENT_NODE) return;
+    const tag = node.tagName;
+    if(tag === 'IMG' || tag === 'SCRIPT' || tag === 'STYLE') return; // imagens coladas via HTML são ignoradas (usamos o arquivo real do clipboard)
+    if(tag === 'BR'){ destParent.appendChild(document.createElement('br')); return; }
+
+    let wrapper = destParent;
+    if(isHighlighted(node)){
+      wrapper = document.createElement('mark');
+      destParent.appendChild(wrapper);
+    }else if(isBold(node)){
+      wrapper = document.createElement('b');
+      destParent.appendChild(wrapper);
+    }
+    sanitizeIntoFragment(node, wrapper);
+
+    if(BLOCK_TAGS.has(tag) && node.nextSibling){
+      destParent.appendChild(document.createElement('br'));
+    }
+  });
+}
+
+function sanitizePastedHtml(html){
+  const src = document.createElement('div');
+  src.innerHTML = html;
+  const out = document.createElement('div');
+  sanitizeIntoFragment(src, out);
+  return out.innerHTML;
+}
+
+/* ---------------------------------------------------------------
+   COLAR IMAGEM: insere como bloco movível e redimensionável
+--------------------------------------------------------------- */
+function makeImageInteractive(wrap){
+  const handle = wrap.querySelector('.img-resize-handle');
+  const img = wrap.querySelector('img');
+
+  wrap.addEventListener('pointerdown', (e) => {
+    if(e.target === handle) return;
+    e.preventDefault();
+    wrap.classList.add('dragging');
+    const contentRect = contentEl.getBoundingClientRect();
+    const startLeft = parseFloat(wrap.style.left) || 0;
+    const startTop = parseFloat(wrap.style.top) || 0;
+    const startX = e.clientX, startY = e.clientY;
+    wrap.setPointerCapture(e.pointerId);
+    function onMove(ev){
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      let left = startLeft + dx;
+      let top = startTop + dy;
+      left = Math.max(0, Math.min(left, contentEl.scrollWidth - 20));
+      top = Math.max(0, top);
+      wrap.style.left = left + 'px';
+      wrap.style.top = top + 'px';
+    }
+    function onUp(ev){
+      wrap.classList.remove('dragging');
+      wrap.removeEventListener('pointermove', onMove);
+      wrap.removeEventListener('pointerup', onUp);
+      syncActiveContentFromEditor();
+      scheduleAutosave();
+    }
+    wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('pointerup', onUp);
+  });
+
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    wrap.classList.add('resizing');
+    const startWidth = wrap.offsetWidth;
+    const startX = e.clientX;
+    handle.setPointerCapture(e.pointerId);
+    function onMove(ev){
+      const dx = ev.clientX - startX;
+      let newWidth = startWidth + dx;
+      newWidth = Math.max(40, Math.min(newWidth, Math.max(contentEl.clientWidth - 20, 40)));
+      wrap.style.width = newWidth + 'px';
+    }
+    function onUp(ev){
+      wrap.classList.remove('resizing');
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onUp);
+      syncActiveContentFromEditor();
+      scheduleAutosave();
+    }
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+  });
+}
+
+function reattachContentImages(){
+  contentEl.querySelectorAll('.img-wrap').forEach(makeImageInteractive);
+}
+
+function insertImageWrap(dataUrl){
+  const wrap = document.createElement('div');
+  wrap.className = 'img-wrap';
+  wrap.contentEditable = 'false';
+  const offset = contentEl.querySelectorAll('.img-wrap').length * 16;
+  wrap.style.left = (20 + offset) + 'px';
+  wrap.style.top = (contentEl.scrollTop + 20 + offset) + 'px';
+  wrap.style.width = '220px';
+
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.draggable = false;
+  img.alt = 'imagem colada';
+
+  const handle = document.createElement('div');
+  handle.className = 'img-resize-handle';
+
+  wrap.appendChild(img);
+  wrap.appendChild(handle);
+  contentEl.appendChild(wrap);
+  makeImageInteractive(wrap);
+
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+}
+
+function insertImageFile(file){
+  const reader = new FileReader();
+  reader.onload = (ev) => insertImageWrap(ev.target.result);
+  reader.readAsDataURL(file);
+}
+
+/* ---------------------------------------------------------------
+   Handler de colar: imagem -> bloco movível; texto -> texto puro
+   no padrão do bloco (sem fonte/tamanho/cor externos)
+--------------------------------------------------------------- */
+contentEl.addEventListener('paste', (e) => {
+  const dt = e.clipboardData || window.clipboardData;
+  if(!dt) return;
+  e.preventDefault();
+
+  let imageFile = null;
+  if(dt.files && dt.files.length){
+    for(const f of dt.files){ if(f.type && f.type.startsWith('image/')){ imageFile = f; break; } }
+  }
+  if(!imageFile && dt.items){
+    for(const it of dt.items){
+      if(it.kind === 'file' && it.type && it.type.startsWith('image/')){ imageFile = it.getAsFile(); break; }
+    }
+  }
+  if(imageFile){ insertImageFile(imageFile); return; }
+
+  const html = dt.getData('text/html');
+  if(html && html.trim()){
+    const clean = sanitizePastedHtml(html);
+    document.execCommand('insertHTML', false, clean);
+  }else{
+    const text = dt.getData('text/plain');
+    if(text) document.execCommand('insertText', false, text);
+  }
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+});
 
 /* ---- tour guiado (primeira experiência) ---- */
 const tourSteps = [
