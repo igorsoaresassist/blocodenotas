@@ -189,10 +189,14 @@
     padding:8px 10px 8px 14px; font-size:12.5px;
     border-right:1px solid var(--border); color:var(--muted);
     cursor:grab; white-space:nowrap; max-width:180px; background:var(--tab-bg);
+    position:relative;
   }
   .tab.tab-dragging{
-    cursor:grabbing; opacity:.55; box-shadow:0 3px 10px rgba(0,0,0,0.18);
+    cursor:grabbing; z-index:5; box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    background:var(--panel-bg);
   }
+  .tab.drop-before{ box-shadow: inset 3px 0 0 var(--accent); }
+  .tab.drop-after{ box-shadow: inset -3px 0 0 var(--accent); }
   .tab .t-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tab.active{ background:var(--panel-bg); color:var(--text); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
   .tab .x{ border:none;background:none;color:var(--muted); font-size:13px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:2px; }
@@ -704,7 +708,7 @@ function renderTabs(){
       if(tabDragJustEnded){ tabDragJustEnded = false; return; }
       switchToPage(p.id);
     });
-    setupTabDrag(tab);
+    setupTabDrag(tab, p.id);
     tabsEl.appendChild(tab);
   });
   const addTab = document.createElement('div');
@@ -714,10 +718,13 @@ function renderTabs(){
   pageCount.textContent = pages.length + (pages.length === 1 ? ' página' : ' páginas');
 }
 
-/* ---- arrastar abas para reordenar as páginas ---- */
+/* ---- arrastar abas para reordenar as páginas ----
+   A aba arrastada segue o ponteiro visualmente (transform), enquanto um
+   indicador mostra onde ela vai encaixar; a ordem só é aplicada ao soltar. */
 let tabDragJustEnded = false;
-function setupTabDrag(tabEl){
+function setupTabDrag(tabEl, pageId){
   let startX, startY, pointerId, dragging = false;
+  let dropTargetEl = null, dropBefore = true;
 
   tabEl.addEventListener('pointerdown', (e) => {
     if(e.target.closest('.x')) return;
@@ -725,10 +732,18 @@ function setupTabDrag(tabEl){
     startX = e.clientX; startY = e.clientY;
     pointerId = e.pointerId;
     dragging = false;
+    dropTargetEl = null;
     tabEl.addEventListener('pointermove', onMove);
     tabEl.addEventListener('pointerup', onUp);
     tabEl.addEventListener('pointercancel', onUp);
   });
+
+  function clearIndicator(){
+    if(dropTargetEl){
+      dropTargetEl.classList.remove('drop-before', 'drop-after');
+      dropTargetEl = null;
+    }
+  }
 
   function onMove(e){
     const dx = e.clientX - startX, dy = e.clientY - startY;
@@ -738,14 +753,19 @@ function setupTabDrag(tabEl){
       try{ tabEl.setPointerCapture(pointerId); }catch(err){}
       tabEl.classList.add('tab-dragging');
       tabEl.style.touchAction = 'none';
+      tabEl.style.pointerEvents = 'none'; // deixa o hit-test "enxergar" as abas por baixo
     }
     e.preventDefault();
-    const target = document.elementFromPoint(e.clientX, e.clientY);
-    const targetTab = target ? target.closest('.tab') : null;
+    tabEl.style.transform = `translateX(${dx}px)`;
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const targetTab = el ? el.closest('.tab') : null;
+    clearIndicator();
     if(targetTab && targetTab !== tabEl && tabsEl.contains(targetTab)){
       const rect = targetTab.getBoundingClientRect();
-      const before = e.clientX < rect.left + rect.width / 2;
-      tabsEl.insertBefore(tabEl, before ? targetTab : targetTab.nextSibling);
+      dropBefore = e.clientX < rect.left + rect.width / 2;
+      targetTab.classList.add(dropBefore ? 'drop-before' : 'drop-after');
+      dropTargetEl = targetTab;
     }
   }
 
@@ -755,9 +775,21 @@ function setupTabDrag(tabEl){
     tabEl.removeEventListener('pointercancel', onUp);
     if(dragging){
       tabEl.classList.remove('tab-dragging');
+      tabEl.style.transform = '';
       tabEl.style.touchAction = '';
-      const newOrder = Array.from(tabsEl.querySelectorAll('.tab')).map(t => t.dataset.id);
-      pages.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+      tabEl.style.pointerEvents = '';
+      if(dropTargetEl){
+        const targetId = dropTargetEl.dataset.id;
+        const fromIdx = pages.findIndex(p => p.id === pageId);
+        if(fromIdx !== -1){
+          const [moved] = pages.splice(fromIdx, 1);
+          let toIdx = pages.findIndex(p => p.id === targetId);
+          if(toIdx === -1) toIdx = pages.length;
+          else if(!dropBefore) toIdx += 1;
+          pages.splice(toIdx, 0, moved);
+        }
+      }
+      clearIndicator();
       tabDragJustEnded = true;
       renderTabs();
       scheduleAutosave();
