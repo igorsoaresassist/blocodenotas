@@ -119,35 +119,50 @@
 
   /* search */
   .search-box{
-    display:flex; align-items:center; gap:6px;
-    flex:0 1 320px; max-width:320px;
+    display:flex; align-items:center; gap:5px;
+    flex:0 1 190px; max-width:190px;
     margin-left:auto;
-    border:1px solid var(--border); border-radius:14px;
-    padding:4px 10px; background:var(--search-bg);
+    border:1px solid var(--border); border-radius:13px;
+    padding:3px 8px; background:var(--search-bg);
   }
   .search-box input{
     flex:1; border:none; outline:none; background:transparent;
-    font-family:inherit; font-size:12.5px; color:var(--text); min-width:0;
+    font-family:inherit; font-size:12px; color:var(--text); min-width:0;
   }
-  .search-box .count{ font-size:11px; color:var(--muted); white-space:nowrap; }
+  .search-box .count{ font-size:10.5px; color:var(--muted); white-space:nowrap; }
   .search-box button{
     border:none; background:none; cursor:pointer; color:var(--muted);
-    font-size:13px; padding:0 2px; line-height:1;
+    font-size:12px; padding:0 1px; line-height:1;
   }
   .search-box button:hover{ color:var(--text); }
   .search-box button:disabled{ opacity:.35; cursor:default; }
+
+  /* destaque dos resultados da busca (via CSS Custom Highlight API, não altera o conteúdo real) */
+  ::highlight(search-all-hl){
+    background-color: rgba(255, 213, 79, 0.45);
+  }
+  ::highlight(search-current-hl){
+    background-color: #ff9800;
+    color: #1a1a1a;
+  }
 
   /* responsividade da barra de título em telas pequenas */
   @media (max-width: 600px){
     .titlebar{ padding:6px 8px; gap:6px; }
     .titlebar .path{ max-width:28vw; font-size:11.5px; }
-    .search-box{ flex:0 1 150px; max-width:150px; padding:4px 8px; }
+    .search-box{ flex:0 1 120px; max-width:120px; padding:3px 6px; }
     .search-box .count{ display:none; }
   }
   @media (max-width: 420px){
     .titlebar .path{ max-width:22vw; }
-    .search-box{ flex:0 1 110px; max-width:110px; gap:4px; }
+    .search-box{ flex:0 1 92px; max-width:92px; gap:3px; }
   }
+
+  .icon-btn{
+    flex:none; border:none; background:none; cursor:pointer; color:var(--muted);
+    font-size:16px; padding:4px 6px; line-height:1; border-radius:4px;
+  }
+  .icon-btn:hover{ color:var(--text); }
 
   /* menu */
   .menu-wrap{ position:relative; flex:none; }
@@ -173,7 +188,10 @@
     display:flex;align-items:center;gap:8px;
     padding:8px 10px 8px 14px; font-size:12.5px;
     border-right:1px solid var(--border); color:var(--muted);
-    cursor:pointer; white-space:nowrap; max-width:180px; background:var(--tab-bg);
+    cursor:grab; white-space:nowrap; max-width:180px; background:var(--tab-bg);
+  }
+  .tab.tab-dragging{
+    cursor:grabbing; opacity:.55; box-shadow:0 3px 10px rgba(0,0,0,0.18);
   }
   .tab .t-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .tab.active{ background:var(--panel-bg); color:var(--text); font-weight:600; box-shadow: inset 0 -2px 0 var(--accent); }
@@ -222,6 +240,14 @@
     width:14px; height:14px; border-radius:50%;
     background:var(--accent); border:2px solid var(--bg);
     cursor:nwse-resize;
+  }
+  #content .img-wrap .img-delete-handle{
+    position:absolute; top:-9px; right:-9px;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--bad); border:2px solid var(--bg);
+    color:#fff; font-size:13px; font-weight:700; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
   }
   #content .img-wrap.dragging,
   #content .img-wrap.resizing{
@@ -336,17 +362,18 @@
 
       <div class="search-box">
         <span style="color:var(--muted);font-size:12px;">🔎</span>
-        <input id="searchInput" placeholder="Pesquisar no texto..." autocomplete="off">
+        <input id="searchInput" placeholder="Pesquisar..." autocomplete="off">
         <span class="count" id="searchCount"></span>
         <button id="searchPrev" title="Anterior">‹</button>
         <button id="searchNext" title="Próxima">›</button>
       </div>
 
+      <button id="themeToggleBtn" class="icon-btn" title="Alternar modo claro/escuro"></button>
+
       <div class="menu-wrap">
         <button id="menuBtn" title="Mais opções">⋮</button>
         <div id="menuDropdown">
           <button class="link-btn" id="startTourBtn">Como usar o site</button>
-          <button class="link-btn" id="themeToggleBtn">Modo escuro</button>
           <button class="link-btn" id="togglePwBtn">Trocar senha</button>
           <button class="link-btn danger" id="deleteAccountBtn">Excluir conta</button>
           <button class="link-btn" id="exitBtn">Sair</button>
@@ -662,6 +689,7 @@ function renderTabs(){
   pages.forEach((p, idx) => {
     const tab = document.createElement('div');
     tab.className = 'tab' + (p.id === activePageId ? ' active' : '');
+    tab.dataset.id = p.id;
     const titleSpan = document.createElement('span');
     titleSpan.className = 't-title';
     titleSpan.textContent = titleFor(p);
@@ -672,7 +700,11 @@ function renderTabs(){
       x.addEventListener('click', (ev) => { ev.stopPropagation(); deletePage(p.id); });
       tab.appendChild(x);
     }
-    tab.addEventListener('click', () => switchToPage(p.id));
+    tab.addEventListener('click', () => {
+      if(tabDragJustEnded){ tabDragJustEnded = false; return; }
+      switchToPage(p.id);
+    });
+    setupTabDrag(tab);
     tabsEl.appendChild(tab);
   });
   const addTab = document.createElement('div');
@@ -682,6 +714,58 @@ function renderTabs(){
   pageCount.textContent = pages.length + (pages.length === 1 ? ' página' : ' páginas');
 }
 
+/* ---- arrastar abas para reordenar as páginas ---- */
+let tabDragJustEnded = false;
+function setupTabDrag(tabEl){
+  let startX, startY, pointerId, dragging = false;
+
+  tabEl.addEventListener('pointerdown', (e) => {
+    if(e.target.closest('.x')) return;
+    if(e.pointerType === 'mouse' && e.button !== 0) return;
+    startX = e.clientX; startY = e.clientY;
+    pointerId = e.pointerId;
+    dragging = false;
+    tabEl.addEventListener('pointermove', onMove);
+    tabEl.addEventListener('pointerup', onUp);
+    tabEl.addEventListener('pointercancel', onUp);
+  });
+
+  function onMove(e){
+    const dx = e.clientX - startX, dy = e.clientY - startY;
+    if(!dragging){
+      if(Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      dragging = true;
+      try{ tabEl.setPointerCapture(pointerId); }catch(err){}
+      tabEl.classList.add('tab-dragging');
+      tabEl.style.touchAction = 'none';
+    }
+    e.preventDefault();
+    const target = document.elementFromPoint(e.clientX, e.clientY);
+    const targetTab = target ? target.closest('.tab') : null;
+    if(targetTab && targetTab !== tabEl && tabsEl.contains(targetTab)){
+      const rect = targetTab.getBoundingClientRect();
+      const before = e.clientX < rect.left + rect.width / 2;
+      tabsEl.insertBefore(tabEl, before ? targetTab : targetTab.nextSibling);
+    }
+  }
+
+  function onUp(){
+    tabEl.removeEventListener('pointermove', onMove);
+    tabEl.removeEventListener('pointerup', onUp);
+    tabEl.removeEventListener('pointercancel', onUp);
+    if(dragging){
+      tabEl.classList.remove('tab-dragging');
+      tabEl.style.touchAction = '';
+      const newOrder = Array.from(tabsEl.querySelectorAll('.tab')).map(t => t.dataset.id);
+      pages.sort((a, b) => newOrder.indexOf(a.id) - newOrder.indexOf(b.id));
+      tabDragJustEnded = true;
+      renderTabs();
+      scheduleAutosave();
+    }
+    dragging = false;
+  }
+}
+
 function switchToPage(id){
   if(id === activePageId) return;
   syncActiveContentFromEditor();
@@ -689,6 +773,7 @@ function switchToPage(id){
   const p = pages.find(x => x.id === id);
   contentEl.innerHTML = p ? p.content : '';
   reattachContentImages();
+  clearSearch();
   renderTabs();
   contentEl.focus();
 }
@@ -701,6 +786,7 @@ function addPage(){
   const p = { id:newId(), content:'' };
   pages.push(p); activePageId = p.id;
   contentEl.innerHTML = '';
+  clearSearch();
   renderTabs(); contentEl.focus();
   scheduleAutosave();
 }
@@ -725,6 +811,7 @@ async function deletePage(id){
     activePageId = next.id;
     contentEl.innerHTML = next.content;
     reattachContentImages();
+    clearSearch();
   }
   renderTabs();
   scheduleAutosave();
@@ -737,6 +824,7 @@ function openEditor(){
   const active = pages.find(p => p.id === activePageId);
   contentEl.innerHTML = active ? active.content : '';
   reattachContentImages();
+  clearSearch();
   saveStatus.textContent = 'tudo salvo';
   changePwPanel.style.display = 'none';
   renderTabs();
@@ -752,6 +840,7 @@ function scheduleAutosave(){
 contentEl.addEventListener('input', () => {
   syncActiveContentFromEditor();
   renderTabs();
+  if(searchInput.value.trim()) computeMatches(searchInput.value.trim(), true);
   scheduleAutosave();
 });
 async function doAutosave(){
@@ -817,11 +906,11 @@ slugInput.addEventListener('keydown', e => { if(e.key==='Enter') goBtn.click(); 
 function applyTheme(dark){
   document.documentElement.classList.toggle('dark', dark);
   try{ localStorage.setItem('blocoDark', dark ? '1' : '0'); }catch(e){}
-  themeToggleBtn.textContent = dark ? 'Modo claro' : 'Modo escuro';
+  themeToggleBtn.textContent = dark ? '☀️' : '🌙';
+  themeToggleBtn.title = dark ? 'Mudar para modo claro' : 'Mudar para modo escuro';
 }
-themeToggleBtn.textContent = document.documentElement.classList.contains('dark') ? 'Modo claro' : 'Modo escuro';
+applyTheme(document.documentElement.classList.contains('dark'));
 themeToggleBtn.addEventListener('click', () => {
-  menuDropdown.classList.remove('open');
   applyTheme(!document.documentElement.classList.contains('dark'));
 });
 
@@ -840,6 +929,8 @@ document.addEventListener('click', (e) => {
 let matches = []; // {node, start, end}
 let matchIndex = -1;
 let hasNavigated = false; // só vira true quando o usuário navega de fato (Enter/setas)
+const supportsHighlightApi = !!(window.Highlight && CSS.highlights);
+let searchAllHl = null, searchCurrentHl = null;
 
 function collectTextNodes(root){
   const nodes = [];
@@ -848,11 +939,36 @@ function collectTextNodes(root){
   while(n = walker.nextNode()) nodes.push(n);
   return nodes;
 }
-function computeMatches(query){
+function makeMatchRange(m){
+  const range = document.createRange();
+  range.setStart(m.node, m.start);
+  range.setEnd(m.node, m.end);
+  return range;
+}
+function paintHighlights(){
+  if(!supportsHighlightApi) return;
+  if(!matches.length){
+    CSS.highlights.delete('search-all-hl');
+    CSS.highlights.delete('search-current-hl');
+    return;
+  }
+  const ranges = matches.map(makeMatchRange);
+  searchAllHl = new Highlight(...ranges);
+  CSS.highlights.set('search-all-hl', searchAllHl);
+  if(matchIndex >= 0){
+    searchCurrentHl = new Highlight(ranges[matchIndex]);
+    CSS.highlights.set('search-current-hl', searchCurrentHl);
+  }else{
+    CSS.highlights.delete('search-current-hl');
+  }
+}
+function computeMatches(query, keepIndex){
+  const prevMatchNode = (keepIndex && matches[matchIndex]) ? matches[matchIndex].node : null;
+  const prevMatchStart = (keepIndex && matches[matchIndex]) ? matches[matchIndex].start : -1;
   matches = [];
   matchIndex = -1;
-  hasNavigated = false;
-  if(!query) { updateSearchUI(); return; }
+  if(!keepIndex) hasNavigated = false;
+  if(!query){ updateSearchUI(); paintHighlights(); return; }
   const q = query.toLowerCase();
   const nodes = collectTextNodes(contentEl);
   nodes.forEach(node => {
@@ -863,23 +979,32 @@ function computeMatches(query){
       from = idx + q.length;
     }
   });
-  if(matches.length) matchIndex = 0;
-  // Apenas atualiza a contagem (ex: "3/12"); NÃO move cursor/seleção enquanto digita.
+  if(matches.length){
+    if(keepIndex && prevMatchNode){
+      const found = matches.findIndex(m => m.node === prevMatchNode && m.start === prevMatchStart);
+      matchIndex = found !== -1 ? found : 0;
+    }else{
+      matchIndex = 0;
+    }
+  }
+  // Apenas atualiza a contagem/realce; NÃO move o foco enquanto digita.
   updateSearchUI();
+  paintHighlights();
+}
+function scrollMatchIntoView(range){
+  const rect = range.getBoundingClientRect();
+  const box = contentEl.getBoundingClientRect();
+  if(rect.top >= box.top && rect.bottom <= box.bottom) return; // já visível
+  const delta = (rect.top - box.top) - (box.height / 2) + (rect.height / 2);
+  contentEl.scrollBy({ top: delta, behavior:'smooth' });
 }
 function goToMatch(i){
   if(!matches.length) return;
   matchIndex = ((i % matches.length) + matches.length) % matches.length;
   hasNavigated = true;
-  const m = matches[matchIndex];
-  const range = document.createRange();
-  range.setStart(m.node, m.start);
-  range.setEnd(m.node, m.end);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-  const el = m.node.parentElement;
-  if(el && el.scrollIntoView) el.scrollIntoView({ block:'center', behavior:'smooth' });
+  const range = makeMatchRange(matches[matchIndex]);
+  scrollMatchIntoView(range);
+  paintHighlights();
   updateSearchUI();
 }
 function navigate(direction){
@@ -899,9 +1024,14 @@ function updateSearchUI(){
 searchInput.addEventListener('input', () => computeMatches(searchInput.value.trim()));
 searchInput.addEventListener('keydown', (e) => {
   if(e.key === 'Enter'){ e.preventDefault(); navigate(e.shiftKey ? -1 : 1); }
+  if(e.key === 'Escape'){ searchInput.value = ''; computeMatches(''); searchInput.blur(); }
 });
 searchNext.addEventListener('click', () => navigate(1));
 searchPrev.addEventListener('click', () => navigate(-1));
+function clearSearch(){
+  searchInput.value = '';
+  computeMatches('');
+}
 
 /* ---- selection formatting toolbar ---- */
 function showSelToolbar(){
@@ -1021,10 +1151,23 @@ function sanitizePastedHtml(html){
 --------------------------------------------------------------- */
 function makeImageInteractive(wrap){
   const handle = wrap.querySelector('.img-resize-handle');
+  const deleteHandle = wrap.querySelector('.img-delete-handle');
   const img = wrap.querySelector('img');
 
+  if(deleteHandle){
+    deleteHandle.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
+    deleteHandle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      wrap.remove();
+      syncActiveContentFromEditor();
+      renderTabs();
+      scheduleAutosave();
+    });
+  }
+
   wrap.addEventListener('pointerdown', (e) => {
-    if(e.target === handle) return;
+    if(e.target === handle || e.target === deleteHandle) return;
     e.preventDefault();
     wrap.classList.add('dragging');
     const contentRect = contentEl.getBoundingClientRect();
@@ -1098,8 +1241,14 @@ function insertImageWrap(dataUrl){
   const handle = document.createElement('div');
   handle.className = 'img-resize-handle';
 
+  const deleteHandle = document.createElement('div');
+  deleteHandle.className = 'img-delete-handle';
+  deleteHandle.title = 'Excluir imagem';
+  deleteHandle.textContent = '×';
+
   wrap.appendChild(img);
   wrap.appendChild(handle);
+  wrap.appendChild(deleteHandle);
   contentEl.appendChild(wrap);
   makeImageInteractive(wrap);
 
