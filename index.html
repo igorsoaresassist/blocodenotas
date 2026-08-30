@@ -915,7 +915,7 @@ contentEl.addEventListener('input', tryArrowShortcut);
 contentEl.addEventListener('input', () => {
   syncActiveContentFromEditor();
   renderTabs();
-  if(searchInput.value.trim()) computeMatches(searchInput.value.trim(), true);
+  if(searchInput.value.trim()) scheduleSearch(searchInput.value.trim(), true);
   scheduleAutosave();
 });
 async function doAutosave(){
@@ -1076,6 +1076,11 @@ function paintHighlights(){
     CSS.highlights.delete('search-current-hl');
   }
 }
+let searchDebounceTimer = null;
+function scheduleSearch(query, keepIndex){
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => computeMatches(query, keepIndex), 150);
+}
 function computeMatches(query, keepIndex){
   const prevMatchNode = (keepIndex && matches[matchIndex]) ? matches[matchIndex].node : null;
   const prevMatchStart = (keepIndex && matches[matchIndex]) ? matches[matchIndex].start : -1;
@@ -1135,10 +1140,15 @@ function updateSearchUI(){
   searchPrev.disabled = matches.length === 0;
   searchNext.disabled = matches.length === 0;
 }
-searchInput.addEventListener('input', () => computeMatches(searchInput.value.trim()));
+searchInput.addEventListener('input', () => scheduleSearch(searchInput.value.trim()));
 searchInput.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter'){ e.preventDefault(); navigate(e.shiftKey ? -1 : 1); }
-  if(e.key === 'Escape'){ searchInput.value = ''; computeMatches(''); searchInput.blur(); }
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    clearTimeout(searchDebounceTimer);
+    computeMatches(searchInput.value.trim(), true);
+    navigate(e.shiftKey ? -1 : 1);
+  }
+  if(e.key === 'Escape'){ clearTimeout(searchDebounceTimer); searchInput.value = ''; computeMatches(''); searchInput.blur(); }
 });
 searchNext.addEventListener('click', () => navigate(1));
 searchPrev.addEventListener('click', () => navigate(-1));
