@@ -869,6 +869,25 @@ function scheduleAutosave(){
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(doAutosave, 800);
 }
+/* substitui "->" por uma seta de verdade (➞) assim que o usuário termina de digitá-la */
+function tryArrowShortcut(e){
+  if(!(e.inputType === 'insertText' && e.data === '>')) return;
+  const sel = window.getSelection();
+  if(!sel || !sel.isCollapsed || sel.rangeCount === 0) return;
+  const node = sel.anchorNode;
+  const offset = sel.anchorOffset;
+  if(!node || node.nodeType !== Node.TEXT_NODE) return;
+  if(offset < 2) return;
+  if(node.data.slice(offset - 2, offset) !== '->') return;
+  const range = document.createRange();
+  range.setStart(node, offset - 2);
+  range.setEnd(node, offset);
+  sel.removeAllRanges();
+  sel.addRange(range);
+  document.execCommand('insertText', false, '➞');
+}
+contentEl.addEventListener('input', tryArrowShortcut);
+
 contentEl.addEventListener('input', () => {
   syncActiveContentFromEditor();
   renderTabs();
