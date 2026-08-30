@@ -1,4 +1,21 @@
 <!DOCTYPE html>
+<!--
+  ===================================================================
+  INSTRUÇÃO PARA IA / DESENVOLVEDOR (vale para qualquer conversa futura):
+  Este arquivo tem um número de versão exibido na tela, ao lado do
+  status "tudo salvo" (procure por id="appVersion").
+
+  REGRA OBRIGATÓRIA: toda vez que este código for alterado, o número
+  de versão em id="appVersion" deve ser incrementado, seguindo o
+  formato vMAJOR.MINOR.PATCH:
+    - a cada alteração, soma 1 no PATCH (último número)
+    - quando o PATCH passaria de 9, ele volta a 0 e o MINOR soma 1
+      (exemplo: v1.0.9 -> v1.1.0)
+    - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
+      (exemplo: v1.9.9 -> v2.0.0)
+  Versão atual deste arquivo: v1.0.0
+  ===================================================================
+-->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -280,6 +297,8 @@
     padding:6px 12px; border-top:1px solid var(--border);
     font-size:11.5px; color:var(--muted);
   }
+  .statusbar .left-group{ display:flex; align-items:center; gap:8px; }
+  #appVersion{ opacity:.45; font-size:11px; }
 
   #changePwPanel{ display:none; flex:none; border-top:1px solid var(--border); padding:14px 22px; }
   #changePwPanel .label{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
@@ -420,7 +439,17 @@
     </div>
 
     <div class="statusbar">
-      <span id="saveStatus">tudo salvo</span>
+      <div class="left-group">
+        <span id="saveStatus">tudo salvo</span>
+        <!--
+          VERSÃO DO SITE — atualizar manualmente a cada alteração de código.
+          Regra: v<major>.<minor>.<patch>
+          - a cada mudança, incrementa o patch (último número)
+          - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
+          - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
+        -->
+        <span id="appVersion" title="Versão do site">v1.0.0</span>
+      </div>
       <span id="pageCount"></span>
     </div>
   </div>
