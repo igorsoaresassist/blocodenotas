@@ -908,7 +908,7 @@ function tryArrowShortcut(e){
   range.setEnd(node, offset);
   sel.removeAllRanges();
   sel.addRange(range);
-  document.execCommand('insertText', false, '➔');
+  document.execCommand('insertText', false, '⇨');
 }
 contentEl.addEventListener('input', tryArrowShortcut);
 
@@ -1181,26 +1181,45 @@ btnHi.addEventListener('mousedown', (e) => {
 });
 btnClear.addEventListener('mousedown', (e) => {
   e.preventDefault();
-  document.execCommand('removeFormat');
-  // reforço: remove qualquer resquício de marca-texto/negrito que o removeFormat não pegue
   const sel = window.getSelection();
-  if(sel && sel.rangeCount && !sel.isCollapsed){
-    const range = sel.getRangeAt(0);
-    let node = range.commonAncestorContainer;
-    if(node.nodeType !== 1) node = node.parentElement;
-    if(node && contentEl.contains(node)){
-      node.querySelectorAll('mark, b, strong, [style*="background-color"], [style*="font-weight"]').forEach(el => {
-        if(!range.intersectsNode(el)) return;
-        el.style.backgroundColor = '';
-        el.style.fontWeight = '';
-        if(el.tagName === 'MARK' || el.tagName === 'B' || el.tagName === 'STRONG'){
-          const parent = el.parentNode;
-          while(el.firstChild) parent.insertBefore(el.firstChild, el);
-          parent.removeChild(el);
-        }
-      });
-    }
+  if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  if(!contentEl.contains(range.commonAncestorContainer)) return;
+
+  // extrai só o trecho selecionado (o Range já corta/divide qualquer <mark>/<b>
+  // que comece ou termine no meio da seleção, preservando o resto intacto)
+  const frag = range.extractContents();
+  const tempDiv = document.createElement('div');
+  tempDiv.appendChild(frag);
+
+  // remove estilo de negrito/marca-texto de tudo dentro do trecho extraído
+  tempDiv.querySelectorAll('*').forEach(el => {
+    el.style.backgroundColor = '';
+    el.style.fontWeight = '';
+  });
+  // desembrulha as tags semânticas, mantendo o texto
+  tempDiv.querySelectorAll('mark, b, strong').forEach(el => {
+    const parent = el.parentNode;
+    while(el.firstChild) parent.insertBefore(el.firstChild, el);
+    parent.removeChild(el);
+  });
+
+  const nodesToInsert = Array.from(tempDiv.childNodes);
+  const cleanFrag = document.createDocumentFragment();
+  nodesToInsert.forEach(n => cleanFrag.appendChild(n));
+
+  range.insertNode(cleanFrag);
+
+  // reseleciona exatamente o trecho que acabou de ser limpo
+  if(nodesToInsert.length){
+    const newRange = document.createRange();
+    newRange.setStartBefore(nodesToInsert[0]);
+    newRange.setEndAfter(nodesToInsert[nodesToInsert.length - 1]);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
   }
+
+  contentEl.normalize();
   syncActiveContentFromEditor();
   scheduleAutosave();
 });
