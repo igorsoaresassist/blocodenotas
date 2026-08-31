@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.0
+  Versão atual deste arquivo: v1.0.1
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -213,6 +213,17 @@
   }
   #emojiDropdown button:hover{ background:var(--tab-bg); }
 
+  /* painel do mapa mental (seta / caixa de texto) */
+  #mindmapDropdown{
+    display:none; position:absolute; top:28px; right:0;
+    background:var(--panel-bg); border:1px solid var(--border); border-radius:4px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.08);
+    min-width:190px; padding:6px; z-index:20;
+  }
+  #mindmapDropdown.open{ display:block; }
+  #mindmapDropdown .link-btn{ display:flex; align-items:center; gap:8px; }
+  #mindmapDropdown .link-btn .mm-ico{ font-size:14px; width:16px; text-align:center; flex:none; }
+
   /* tabs */
   #tabs{
     flex:none; display:flex; align-items:stretch; overflow-x:auto;
@@ -291,6 +302,71 @@
   #content .img-wrap.resizing{
     opacity:.85;
   }
+
+  /* mapa mental: setas */
+  #content.arrow-draw-mode{ cursor:crosshair; }
+  #content .arrow-wrap{
+    position:absolute; z-index:2; user-select:none; -webkit-user-select:none;
+  }
+  #content .arrow-wrap svg{ display:block; overflow:visible; }
+  #content .arrow-wrap .arrow-hit{
+    stroke:transparent; stroke-width:14; fill:none; cursor:move;
+  }
+  #content .arrow-wrap .arrow-line{
+    stroke:var(--text); stroke-width:2; fill:none; pointer-events:none;
+  }
+  #content .arrow-wrap .arrow-handle{
+    position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px;
+    border-radius:50%; background:var(--accent); border:2px solid var(--bg);
+    cursor:pointer;
+  }
+  #content .arrow-wrap .arrow-delete{
+    position:absolute; width:18px; height:18px; margin:-9px 0 0 -9px;
+    border-radius:50%; background:var(--bad); border:2px solid var(--bg);
+    color:#fff; font-size:12px; font-weight:700; line-height:1;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    opacity:0; transition:opacity .15s;
+  }
+  #content .arrow-wrap:hover .arrow-delete{ opacity:1; }
+  #content .arrow-wrap.dragging .arrow-line,
+  #content .arrow-wrap.dragging .arrow-hit{ opacity:.7; }
+
+  /* mapa mental: caixas de texto */
+  #content .textbox-wrap{
+    position:absolute; z-index:2; cursor:move;
+    background:#faf6ec; border:1.5px solid #1a1a1a; border-radius:4px;
+    padding:12px 16px; min-width:70px; min-height:24px;
+    box-shadow:0 1px 4px rgba(0,0,0,0.08);
+  }
+  html.dark #content .textbox-wrap{
+    background:#f4ecd2; border-color:#1a1a1a;
+  }
+  #content .textbox-wrap .textbox-content{
+    text-align:center; outline:none; cursor:text; color:#1a1a1a;
+    min-width:40px; min-height:1.4em; white-space:pre-wrap; word-break:break-word;
+  }
+  #content .textbox-wrap .textbox-content:empty:before{
+    content: attr(data-placeholder); color:#999;
+  }
+  #content .textbox-resize-handle{
+    position:absolute; right:-7px; bottom:-7px;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--accent); border:2px solid var(--bg);
+    cursor:nwse-resize;
+  }
+  #content .textbox-delete-handle{
+    position:absolute; top:-9px; right:-9px;
+    width:20px; height:20px; border-radius:50%;
+    background:var(--bad); border:2px solid var(--bg);
+    color:#fff; font-size:13px; font-weight:700; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; opacity:0; transition:opacity .15s;
+  }
+  #content .textbox-wrap:hover .textbox-delete-handle,
+  #content .textbox-wrap:hover .textbox-resize-handle{ opacity:1; }
+  #content .textbox-resize-handle{ opacity:0; transition:opacity .15s; }
+  #content .textbox-wrap.dragging,
+  #content .textbox-wrap.resizing{ opacity:.85; }
 
   .statusbar{
     flex:none; display:flex; justify-content:space-between; align-items:center;
@@ -416,6 +492,14 @@
       </div>
 
       <div class="menu-wrap">
+        <button id="mindmapBtn" class="icon-btn" title="Mapa mental (seta / caixa de texto)">🧠</button>
+        <div id="mindmapDropdown">
+          <button class="link-btn" id="mindmapArrowBtn"><span class="mm-ico">↗</span> Criar seta</button>
+          <button class="link-btn" id="mindmapBoxBtn"><span class="mm-ico">▭</span> Criar caixa de texto</button>
+        </div>
+      </div>
+
+      <div class="menu-wrap">
         <button id="menuBtn" title="Mais opções">⋮</button>
         <div id="menuDropdown">
           <button class="link-btn" id="startTourBtn">Como usar o site</button>
@@ -448,7 +532,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.0</span>
+        <span id="appVersion" title="Versão do site">v1.0.1</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -563,6 +647,10 @@ const menuBtn = document.getElementById('menuBtn');
 const menuDropdown = document.getElementById('menuDropdown');
 const emojiBtn = document.getElementById('emojiBtn');
 const emojiDropdown = document.getElementById('emojiDropdown');
+const mindmapBtn = document.getElementById('mindmapBtn');
+const mindmapDropdown = document.getElementById('mindmapDropdown');
+const mindmapArrowBtn = document.getElementById('mindmapArrowBtn');
+const mindmapBoxBtn = document.getElementById('mindmapBoxBtn');
 const searchInput = document.getElementById('searchInput');
 const searchCount = document.getElementById('searchCount');
 const searchPrev = document.getElementById('searchPrev');
@@ -1056,6 +1144,29 @@ emojiBtn.addEventListener('click', (e) => {
   menuDropdown.classList.remove('open');
   emojiDropdown.classList.toggle('open');
 });
+mindmapBtn.addEventListener('mousedown', (e) => e.preventDefault());
+mindmapBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  emojiDropdown.classList.remove('open');
+  menuDropdown.classList.remove('open');
+  mindmapDropdown.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if(!mindmapDropdown.contains(e.target) && e.target !== mindmapBtn){
+    mindmapDropdown.classList.remove('open');
+  }
+});
+mindmapArrowBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  mindmapDropdown.classList.remove('open');
+  startArrowDrawMode();
+});
+mindmapBoxBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  mindmapDropdown.classList.remove('open');
+  insertTextBox();
+});
+
 emojiDropdown.addEventListener('click', (e) => {
   const btn = e.target.closest('button');
   if(!btn) return;
@@ -1394,6 +1505,281 @@ function makeImageInteractive(wrap){
 
 function reattachContentImages(){
   contentEl.querySelectorAll('.img-wrap').forEach(makeImageInteractive);
+  contentEl.querySelectorAll('.arrow-wrap').forEach(makeArrowInteractive);
+  contentEl.querySelectorAll('.textbox-wrap').forEach(makeTextboxInteractive);
+}
+
+/* ---------------- MAPA MENTAL: SETAS ---------------- */
+let arrowCounter = 0;
+const ARROW_PAD = 14;
+
+function contentPoint(e){
+  const rect = contentEl.getBoundingClientRect();
+  return {
+    x: e.clientX - rect.left + contentEl.scrollLeft,
+    y: e.clientY - rect.top + contentEl.scrollTop
+  };
+}
+
+function arrowMarkerId(wrap){ return 'arrowhead_' + wrap.dataset.aid; }
+
+function positionArrowWrap(wrap){
+  const x1 = parseFloat(wrap.dataset.x1), y1 = parseFloat(wrap.dataset.y1);
+  const x2 = parseFloat(wrap.dataset.x2), y2 = parseFloat(wrap.dataset.y2);
+  const minX = Math.min(x1, x2) - ARROW_PAD, minY = Math.min(y1, y2) - ARROW_PAD;
+  const w = Math.abs(x2 - x1) + ARROW_PAD * 2, h = Math.abs(y2 - y1) + ARROW_PAD * 2;
+  wrap.style.left = minX + 'px';
+  wrap.style.top = minY + 'px';
+  wrap.style.width = w + 'px';
+  wrap.style.height = h + 'px';
+
+  const svg = wrap.querySelector('svg');
+  svg.setAttribute('width', w); svg.setAttribute('height', h);
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const lx1 = x1 - minX, ly1 = y1 - minY, lx2 = x2 - minX, ly2 = y2 - minY;
+  const line = wrap.querySelector('.arrow-line');
+  const hit = wrap.querySelector('.arrow-hit');
+  [line, hit].forEach(el => {
+    el.setAttribute('x1', lx1); el.setAttribute('y1', ly1);
+    el.setAttribute('x2', lx2); el.setAttribute('y2', ly2);
+  });
+  const handle1 = wrap.querySelector('.arrow-handle.a1');
+  const handle2 = wrap.querySelector('.arrow-handle.a2');
+  handle1.style.left = lx1 + 'px'; handle1.style.top = ly1 + 'px';
+  handle2.style.left = lx2 + 'px'; handle2.style.top = ly2 + 'px';
+  const del = wrap.querySelector('.arrow-delete');
+  del.style.left = ((lx1 + lx2) / 2) + 'px';
+  del.style.top = ((ly1 + ly2) / 2) + 'px';
+}
+
+function makeArrowInteractive(wrap){
+  const hit = wrap.querySelector('.arrow-hit');
+  const handle1 = wrap.querySelector('.arrow-handle.a1');
+  const handle2 = wrap.querySelector('.arrow-handle.a2');
+  const del = wrap.querySelector('.arrow-delete');
+
+  del.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
+  del.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    wrap.remove();
+    syncActiveContentFromEditor();
+    renderTabs();
+    scheduleAutosave();
+  });
+
+  function dragEndpoint(which){
+    return (e) => {
+      e.preventDefault(); e.stopPropagation();
+      wrap.classList.add('resizing');
+      wrap.setPointerCapture(e.pointerId);
+      function onMove(ev){
+        const p = contentPoint(ev);
+        wrap.dataset['x' + which] = p.x;
+        wrap.dataset['y' + which] = p.y;
+        positionArrowWrap(wrap);
+      }
+      function onUp(){
+        wrap.classList.remove('resizing');
+        wrap.removeEventListener('pointermove', onMove);
+        wrap.removeEventListener('pointerup', onUp);
+        syncActiveContentFromEditor();
+        scheduleAutosave();
+      }
+      wrap.addEventListener('pointermove', onMove);
+      wrap.addEventListener('pointerup', onUp);
+    };
+  }
+  handle1.addEventListener('pointerdown', dragEndpoint(1));
+  handle2.addEventListener('pointerdown', dragEndpoint(2));
+
+  hit.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    wrap.classList.add('dragging');
+    const startX1 = parseFloat(wrap.dataset.x1), startY1 = parseFloat(wrap.dataset.y1);
+    const startX2 = parseFloat(wrap.dataset.x2), startY2 = parseFloat(wrap.dataset.y2);
+    const startP = contentPoint(e);
+    wrap.setPointerCapture(e.pointerId);
+    function onMove(ev){
+      const p = contentPoint(ev);
+      const dx = p.x - startP.x, dy = p.y - startP.y;
+      wrap.dataset.x1 = startX1 + dx; wrap.dataset.y1 = startY1 + dy;
+      wrap.dataset.x2 = startX2 + dx; wrap.dataset.y2 = startY2 + dy;
+      positionArrowWrap(wrap);
+    }
+    function onUp(){
+      wrap.classList.remove('dragging');
+      wrap.removeEventListener('pointermove', onMove);
+      wrap.removeEventListener('pointerup', onUp);
+      syncActiveContentFromEditor();
+      scheduleAutosave();
+    }
+    wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('pointerup', onUp);
+  });
+}
+
+function buildArrowWrap(x1, y1, x2, y2){
+  const wrap = document.createElement('div');
+  wrap.className = 'arrow-wrap';
+  wrap.contentEditable = 'false';
+  wrap.dataset.aid = String(arrowCounter++);
+  wrap.dataset.x1 = x1; wrap.dataset.y1 = y1; wrap.dataset.x2 = x2; wrap.dataset.y2 = y2;
+  const mid = arrowMarkerId(wrap);
+  wrap.innerHTML = `
+    <svg xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="${mid}" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+          <path d="M0,0 L10,5 L0,10 Z" fill="currentColor" style="color:var(--text);"></path>
+        </marker>
+      </defs>
+      <line class="arrow-hit"></line>
+      <line class="arrow-line" marker-end="url(#${mid})"></line>
+    </svg>
+    <div class="arrow-handle a1"></div>
+    <div class="arrow-handle a2"></div>
+    <div class="arrow-delete" title="Excluir seta">×</div>
+  `;
+  contentEl.appendChild(wrap);
+  positionArrowWrap(wrap);
+  makeArrowInteractive(wrap);
+  return wrap;
+}
+
+function startArrowDrawMode(){
+  contentEl.classList.add('arrow-draw-mode');
+
+  function onDown(e){
+    if(e.target.closest('.arrow-wrap') || e.target.closest('.img-wrap') || e.target.closest('.textbox-wrap')) return;
+    e.preventDefault();
+    contentEl.removeEventListener('pointerdown', onDown, true);
+    contentEl.classList.remove('arrow-draw-mode');
+    const start = contentPoint(e);
+    const wrap = buildArrowWrap(start.x, start.y, start.x + 1, start.y + 1);
+    contentEl.setPointerCapture(e.pointerId);
+    function onMove(ev){
+      const p = contentPoint(ev);
+      wrap.dataset.x2 = p.x; wrap.dataset.y2 = p.y;
+      positionArrowWrap(wrap);
+    }
+    function onUp(){
+      contentEl.removeEventListener('pointermove', onMove);
+      contentEl.removeEventListener('pointerup', onUp);
+      syncActiveContentFromEditor();
+      renderTabs();
+      scheduleAutosave();
+    }
+    contentEl.addEventListener('pointermove', onMove);
+    contentEl.addEventListener('pointerup', onUp);
+  }
+  contentEl.addEventListener('pointerdown', onDown, true);
+}
+
+/* ---------------- MAPA MENTAL: CAIXAS DE TEXTO ---------------- */
+function makeTextboxInteractive(wrap){
+  const handle = wrap.querySelector('.textbox-resize-handle');
+  const del = wrap.querySelector('.textbox-delete-handle');
+  const inner = wrap.querySelector('.textbox-content');
+
+  del.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
+  del.addEventListener('click', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    wrap.remove();
+    syncActiveContentFromEditor();
+    renderTabs();
+    scheduleAutosave();
+  });
+
+  inner.addEventListener('input', () => {
+    syncActiveContentFromEditor();
+    scheduleAutosave();
+  });
+
+  wrap.addEventListener('pointerdown', (e) => {
+    if(e.target !== wrap) return;
+    e.preventDefault();
+    wrap.classList.add('dragging');
+    const contentRect = contentEl.getBoundingClientRect();
+    const startLeft = parseFloat(wrap.style.left) || 0;
+    const startTop = parseFloat(wrap.style.top) || 0;
+    const startX = e.clientX, startY = e.clientY;
+    wrap.setPointerCapture(e.pointerId);
+    function onMove(ev){
+      const dx = ev.clientX - startX, dy = ev.clientY - startY;
+      let left = startLeft + dx;
+      let top = startTop + dy;
+      left = Math.max(0, left);
+      top = Math.max(0, top);
+      wrap.style.left = left + 'px';
+      wrap.style.top = top + 'px';
+    }
+    function onUp(){
+      wrap.classList.remove('dragging');
+      wrap.removeEventListener('pointermove', onMove);
+      wrap.removeEventListener('pointerup', onUp);
+      syncActiveContentFromEditor();
+      scheduleAutosave();
+    }
+    wrap.addEventListener('pointermove', onMove);
+    wrap.addEventListener('pointerup', onUp);
+  });
+
+  handle.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    wrap.classList.add('resizing');
+    const startWidth = wrap.offsetWidth;
+    const startX = e.clientX;
+    handle.setPointerCapture(e.pointerId);
+    function onMove(ev){
+      const dx = ev.clientX - startX;
+      let newWidth = startWidth + dx;
+      newWidth = Math.max(70, newWidth);
+      wrap.style.width = newWidth + 'px';
+    }
+    function onUp(){
+      wrap.classList.remove('resizing');
+      handle.removeEventListener('pointermove', onMove);
+      handle.removeEventListener('pointerup', onUp);
+      syncActiveContentFromEditor();
+      scheduleAutosave();
+    }
+    handle.addEventListener('pointermove', onMove);
+    handle.addEventListener('pointerup', onUp);
+  });
+}
+
+function insertTextBox(){
+  const wrap = document.createElement('div');
+  wrap.className = 'textbox-wrap';
+  wrap.contentEditable = 'false';
+  const offset = contentEl.querySelectorAll('.textbox-wrap, .arrow-wrap, .img-wrap').length * 16;
+  wrap.style.left = (40 + offset) + 'px';
+  wrap.style.top = (contentEl.scrollTop + 40 + offset) + 'px';
+  wrap.style.width = '160px';
+
+  const inner = document.createElement('div');
+  inner.className = 'textbox-content';
+  inner.contentEditable = 'true';
+  inner.dataset.placeholder = 'Digite aqui...';
+
+  const handle = document.createElement('div');
+  handle.className = 'textbox-resize-handle';
+
+  const del = document.createElement('div');
+  del.className = 'textbox-delete-handle';
+  del.title = 'Excluir caixa';
+  del.textContent = '×';
+
+  wrap.appendChild(inner);
+  wrap.appendChild(handle);
+  wrap.appendChild(del);
+  contentEl.appendChild(wrap);
+  makeTextboxInteractive(wrap);
+
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+
+  inner.focus();
 }
 
 function insertImageWrap(dataUrl){
