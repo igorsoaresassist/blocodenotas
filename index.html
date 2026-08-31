@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.1
+  Versão atual deste arquivo: v1.0.2
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -319,6 +319,7 @@
     position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px;
     border-radius:50%; background:var(--accent); border:2px solid var(--bg);
     cursor:pointer;
+    opacity:0; transition:opacity .15s;
   }
   #content .arrow-wrap .arrow-delete{
     position:absolute; width:18px; height:18px; margin:-9px 0 0 -9px;
@@ -327,7 +328,10 @@
     display:flex; align-items:center; justify-content:center; cursor:pointer;
     opacity:0; transition:opacity .15s;
   }
-  #content .arrow-wrap:hover .arrow-delete{ opacity:1; }
+  #content .arrow-wrap:hover .arrow-handle,
+  #content .arrow-wrap:hover .arrow-delete,
+  #content .arrow-wrap.dragging .arrow-handle,
+  #content .arrow-wrap.resizing .arrow-handle{ opacity:1; }
   #content .arrow-wrap.dragging .arrow-line,
   #content .arrow-wrap.dragging .arrow-hit{ opacity:.7; }
 
@@ -532,7 +536,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.1</span>
+        <span id="appVersion" title="Versão do site">v1.0.2</span>
       </div>
       <span id="pageCount"></span>
     </div>
