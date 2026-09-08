@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.3
+  Versão atual deste arquivo: v1.0.4
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -266,20 +266,20 @@
     color:var(--placeholder);
   }
 
-  /* fundo quadriculado (estilo "papel milimetrado"), opcional e sutil */
+  /* fundo quadriculado (estilo "papel milimetrado"), opcional e bem sutil */
   #content.grid-bg{
-    background-color: rgba(250, 248, 240, 0.35);
+    background-color: rgba(250, 248, 240, 0.12);
     background-image:
-      linear-gradient(to right, rgba(120,120,120,0.14) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(120,120,120,0.14) 1px, transparent 1px);
+      linear-gradient(to right, rgba(120,120,120,0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(120,120,120,0.07) 1px, transparent 1px);
     background-size: 22px 22px;
     background-attachment: local;
   }
   html.dark #content.grid-bg{
-    background-color: rgba(244, 236, 210, 0.05);
+    background-color: rgba(244, 236, 210, 0.02);
     background-image:
-      linear-gradient(to right, rgba(200,190,160,0.10) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(200,190,160,0.10) 1px, transparent 1px);
+      linear-gradient(to right, rgba(200,190,160,0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(200,190,160,0.05) 1px, transparent 1px);
     background-size: 22px 22px;
   }
   #gridToggleBtn.active{ color:var(--accent); }
@@ -556,7 +556,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.3</span>
+        <span id="appVersion" title="Versão do site">v1.0.4</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -1218,7 +1218,7 @@ mindmapArrowBtn.addEventListener('click', (e) => {
 mindmapBoxBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   mindmapDropdown.classList.remove('open');
-  insertTextBox();
+  startTextBoxPlaceMode();
 });
 
 emojiDropdown.addEventListener('click', (e) => {
@@ -1805,18 +1805,32 @@ function makeTextboxInteractive(wrap){
   });
 }
 
-function insertTextBox(){
+function startTextBoxPlaceMode(){
+  contentEl.classList.add('arrow-draw-mode'); // reaproveita o cursor de mira (crosshair)
+
+  function onDown(e){
+    if(e.target.closest('.arrow-wrap') || e.target.closest('.img-wrap') || e.target.closest('.textbox-wrap')) return;
+    e.preventDefault();
+    contentEl.removeEventListener('pointerdown', onDown, true);
+    contentEl.classList.remove('arrow-draw-mode');
+    trackContentPointer(e);
+    insertTextBox({ x: lastContentPointer.x, y: lastContentPointer.y });
+  }
+  contentEl.addEventListener('pointerdown', onDown, true);
+}
+
+function insertTextBox(point){
   const wrap = document.createElement('div');
   wrap.className = 'textbox-wrap';
   wrap.contentEditable = 'false';
   const boxWidth = 160;
   let left, top;
-  if(lastContentPointer){
-    // nasce centrada na posição atual do mouse dentro da área de conteúdo
-    left = Math.max(0, lastContentPointer.x - boxWidth / 2);
-    top = Math.max(0, lastContentPointer.y - 16);
+  if(point){
+    // nasce exatamente onde o usuário clicou
+    left = Math.max(0, point.x);
+    top = Math.max(0, point.y);
   }else{
-    // sem posição de mouse conhecida (ex.: ativado por teclado): usa um ponto visível na área atual
+    // sem ponto de clique informado (ex.: ativado por teclado): usa um ponto visível na área atual
     const offset = contentEl.querySelectorAll('.textbox-wrap, .arrow-wrap, .img-wrap').length * 16 % 120;
     left = 40 + offset;
     top = contentEl.scrollTop + 40 + offset;
