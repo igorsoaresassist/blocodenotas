@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.5
+  Versão atual deste arquivo: v1.0.6
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -209,6 +209,8 @@
 
   /* menu */
   .menu-wrap{ position:relative; flex:none; }
+  .titlebar-menu{ margin-left:auto; }
+  .fmt-menu-wrap{ position:relative; flex:none; display:flex; }
   #menuBtn{
     border:none; background:none; cursor:pointer; color:var(--muted);
     font-size:16px; padding:4px 8px; letter-spacing:2px;
@@ -238,17 +240,6 @@
     padding:4px 0; border-radius:4px; line-height:1.3;
   }
   #emojiDropdown button:hover{ background:var(--tab-bg); }
-
-  /* painel do mapa mental (seta / caixa de texto) */
-  #mindmapDropdown{
-    display:none; position:absolute; top:28px; right:0;
-    background:var(--panel-bg); border:1px solid var(--border); border-radius:4px;
-    box-shadow:0 4px 14px rgba(0,0,0,0.08);
-    min-width:190px; padding:6px; z-index:20;
-  }
-  #mindmapDropdown.open{ display:block; }
-  #mindmapDropdown .link-btn{ display:flex; align-items:center; gap:8px; }
-  #mindmapDropdown .link-btn .mm-ico{ font-size:14px; width:16px; text-align:center; flex:none; }
 
   /* tabs */
   #tabs{
@@ -506,24 +497,7 @@
     <div class="titlebar">
       <div class="path">bloco.app/<span class="name" id="slugLabel"></span></div>
 
-      <button id="themeToggleBtn" class="icon-btn" title="Alternar modo claro/escuro"></button>
-
-      <button id="gridToggleBtn" class="icon-btn" title="Alternar fundo quadriculado">▦</button>
-
-      <div class="menu-wrap">
-        <button id="emojiBtn" class="icon-btn" title="Inserir emoji">😊</button>
-        <div id="emojiDropdown"></div>
-      </div>
-
-      <div class="menu-wrap">
-        <button id="mindmapBtn" class="icon-btn" title="Mapa mental (seta / caixa de texto)">🧠</button>
-        <div id="mindmapDropdown">
-          <button class="link-btn" id="mindmapArrowBtn"><span class="mm-ico">↗</span> Criar seta</button>
-          <button class="link-btn" id="mindmapBoxBtn"><span class="mm-ico">▭</span> Criar caixa de texto</button>
-        </div>
-      </div>
-
-      <div class="menu-wrap">
+      <div class="menu-wrap titlebar-menu">
         <button id="menuBtn" title="Mais opções">⋮</button>
         <div id="menuDropdown">
           <button class="link-btn" id="startTourBtn">Como usar o site</button>
@@ -634,6 +608,19 @@
           <div class="fmt-color-dropdown" id="fmtTextColorDropdown"></div>
         </div>
       </div>
+
+      <div class="fmt-sep"></div>
+
+      <div class="fmt-group">
+        <button class="fmt-btn fmt-text-glyph" id="themeToggleBtn" title="Alternar modo claro/escuro"></button>
+        <button class="fmt-btn fmt-text-glyph" id="gridToggleBtn" title="Alternar fundo quadriculado">▦</button>
+        <button class="fmt-btn fmt-text-glyph" id="mindmapArrowBtn" title="Criar seta">↗</button>
+        <button class="fmt-btn fmt-text-glyph" id="mindmapBoxBtn" title="Criar caixa de texto">▭</button>
+        <div class="fmt-menu-wrap">
+          <button class="fmt-btn fmt-text-glyph" id="emojiBtn" title="Inserir emoji">😊</button>
+          <div id="emojiDropdown"></div>
+        </div>
+      </div>
     </div>
 
     <div id="content" contenteditable="true" data-placeholder="Escreva aqui... a primeira palavra vira o título da página" spellcheck="false"></div>
@@ -656,7 +643,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.5</span>
+        <span id="appVersion" title="Versão do site">v1.0.6</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -775,8 +762,6 @@ const menuBtn = document.getElementById('menuBtn');
 const menuDropdown = document.getElementById('menuDropdown');
 const emojiBtn = document.getElementById('emojiBtn');
 const emojiDropdown = document.getElementById('emojiDropdown');
-const mindmapBtn = document.getElementById('mindmapBtn');
-const mindmapDropdown = document.getElementById('mindmapDropdown');
 const mindmapArrowBtn = document.getElementById('mindmapArrowBtn');
 const mindmapBoxBtn = document.getElementById('mindmapBoxBtn');
 
@@ -1275,26 +1260,16 @@ emojiBtn.addEventListener('click', (e) => {
   menuDropdown.classList.remove('open');
   emojiDropdown.classList.toggle('open');
 });
-mindmapBtn.addEventListener('mousedown', (e) => e.preventDefault());
-mindmapBtn.addEventListener('click', (e) => {
+mindmapArrowBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   emojiDropdown.classList.remove('open');
   menuDropdown.classList.remove('open');
-  mindmapDropdown.classList.toggle('open');
-});
-document.addEventListener('click', (e) => {
-  if(!mindmapDropdown.contains(e.target) && e.target !== mindmapBtn){
-    mindmapDropdown.classList.remove('open');
-  }
-});
-mindmapArrowBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  mindmapDropdown.classList.remove('open');
   startArrowDrawMode();
 });
 mindmapBoxBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-  mindmapDropdown.classList.remove('open');
+  emojiDropdown.classList.remove('open');
+  menuDropdown.classList.remove('open');
   startTextBoxPlaceMode();
 });
 
