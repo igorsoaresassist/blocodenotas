@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.4
+  Versão atual deste arquivo: v1.0.5
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -134,45 +134,13 @@
   .link-btn.danger{color:var(--bad);}
   .link-btn.danger:hover{color:var(--bad);}
 
-  /* search */
-  .search-box{
-    display:flex; align-items:center; gap:5px;
-    flex:0 1 190px; max-width:190px;
-    margin-left:auto;
-    border:1px solid var(--border); border-radius:13px;
-    padding:3px 8px; background:var(--search-bg);
-  }
-  .search-box input{
-    flex:1; border:none; outline:none; background:transparent;
-    font-family:inherit; font-size:12px; color:var(--text); min-width:0;
-  }
-  .search-box .count{ font-size:10.5px; color:var(--muted); white-space:nowrap; }
-  .search-box button{
-    border:none; background:none; cursor:pointer; color:var(--muted);
-    font-size:12px; padding:0 1px; line-height:1;
-  }
-  .search-box button:hover{ color:var(--text); }
-  .search-box button:disabled{ opacity:.35; cursor:default; }
-
-  /* destaque dos resultados da busca (via CSS Custom Highlight API, não altera o conteúdo real) */
-  ::highlight(search-all-hl){
-    background-color: rgba(255, 213, 79, 0.45);
-  }
-  ::highlight(search-current-hl){
-    background-color: #ff9800;
-    color: #1a1a1a;
-  }
-
   /* responsividade da barra de título em telas pequenas */
   @media (max-width: 600px){
     .titlebar{ padding:6px 8px; gap:6px; }
     .titlebar .path{ max-width:28vw; font-size:11.5px; }
-    .search-box{ flex:0 1 120px; max-width:120px; padding:3px 6px; }
-    .search-box .count{ display:none; }
   }
   @media (max-width: 420px){
     .titlebar .path{ max-width:22vw; }
-    .search-box{ flex:0 1 92px; max-width:92px; gap:3px; }
   }
 
   .icon-btn{
@@ -180,6 +148,64 @@
     font-size:16px; padding:4px 6px; line-height:1; border-radius:4px;
   }
   .icon-btn:hover{ color:var(--text); }
+
+  /* ---------------- barra de formatação de texto ---------------- */
+  #formatToolbar{
+    display:flex; align-items:center; flex-wrap:wrap;
+    gap:4px; padding:6px 10px;
+    border-bottom:1px solid var(--border);
+    background:var(--panel-bg); flex:none;
+  }
+  .fmt-group{ display:flex; align-items:center; gap:2px; }
+  .fmt-sep{ width:1px; align-self:stretch; background:var(--border); margin:2px 6px; }
+  .fmt-btn{
+    display:flex; align-items:center; justify-content:center;
+    width:30px; height:28px; border:1px solid transparent; border-radius:4px;
+    background:none; cursor:pointer; color:var(--text); padding:0;
+  }
+  .fmt-btn svg{ width:17px; height:17px; }
+  .fmt-btn:hover{ background:var(--tab-bg); }
+  .fmt-btn.active{ background:var(--tab-bg); border-color:var(--border); }
+  .fmt-btn.fmt-text-glyph{ font-size:14px; font-family:Georgia, "Times New Roman", serif; }
+  #fmtBold{ font-weight:700; }
+  #fmtItalic{ font-style:italic; }
+  #fmtStrike{ text-decoration:line-through; }
+  .fmt-color-wrap{
+    position:relative; display:flex; align-items:stretch;
+    border-radius:4px; overflow:visible;
+  }
+  .fmt-color-wrap:hover{ background:var(--tab-bg); }
+  .fmt-color-main{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; width:30px; height:28px; border:none; background:none; cursor:pointer;
+    color:var(--text); padding:3px 0 4px;
+  }
+  .fmt-color-main svg{ width:15px; height:15px; }
+  .fmt-color-main .fmt-ico{ font-size:13px; line-height:1; font-weight:700; }
+  .fmt-swatch{ width:18px; height:3px; border-radius:1px; display:block; }
+  .fmt-color-caret{
+    width:13px; border:none; background:none; cursor:pointer;
+    color:var(--muted); padding:0; font-size:9px; display:flex; align-items:center; justify-content:center;
+  }
+  .fmt-color-caret:hover{ color:var(--text); }
+  .fmt-color-dropdown{
+    display:none; position:absolute; top:32px; left:0;
+    background:var(--panel-bg); border:1px solid var(--border); border-radius:4px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.08);
+    padding:8px; z-index:20; grid-template-columns:repeat(4,1fr); gap:6px; width:132px;
+  }
+  .fmt-color-dropdown.open{ display:grid; }
+  .fmt-color-dropdown button{
+    width:24px; height:24px; border-radius:4px; border:1px solid var(--border); cursor:pointer; padding:0;
+  }
+  .fmt-color-dropdown button.fmt-none{
+    display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--bad); background:var(--panel-bg);
+  }
+  @media (max-width: 600px){
+    #formatToolbar{ padding:4px 6px; gap:2px; }
+    .fmt-btn, .fmt-color-main{ width:26px; height:26px; }
+    .fmt-sep{ margin:2px 3px; }
+  }
 
   /* menu */
   .menu-wrap{ position:relative; flex:none; }
@@ -415,24 +441,6 @@
   .overlay-box p{ margin:0 0 18px; font-size:13.5px; color:var(--text); line-height:1.5; }
   .overlay-actions{ display:flex; justify-content:flex-end; gap:8px; }
 
-  /* floating selection toolbar */
-  #selToolbar{
-    position:fixed; display:none; align-items:center; gap:2px;
-    background:#222; border-radius:6px; padding:4px; box-shadow:0 4px 14px rgba(0,0,0,0.25);
-    z-index:50;
-  }
-  #selToolbar button{
-    border:none; background:none; color:#fff; cursor:pointer;
-    width:28px; height:26px; border-radius:4px; font-size:13px;
-    display:flex; align-items:center; justify-content:center;
-  }
-  #selToolbar button:hover{ background:rgba(255,255,255,0.15); }
-  #selToolbar button.b{ font-weight:800; }
-  #selToolbar .swatch{
-    width:14px;height:14px;border-radius:3px;background:var(--hi);display:inline-block;
-  }
-  #selToolbar #btnClear{ border-left:1px solid rgba(255,255,255,0.15); margin-left:2px; padding-left:6px; width:30px; }
-
   /* ---------------- TOUR GUIADO ---------------- */
   #tourRoot{ display:none; }
   #tourRoot.open{ display:block; }
@@ -498,14 +506,6 @@
     <div class="titlebar">
       <div class="path">bloco.app/<span class="name" id="slugLabel"></span></div>
 
-      <div class="search-box">
-        <span style="color:var(--muted);font-size:12px;">🔎</span>
-        <input id="searchInput" placeholder="Pesquisar..." autocomplete="off">
-        <span class="count" id="searchCount"></span>
-        <button id="searchPrev" title="Anterior">‹</button>
-        <button id="searchNext" title="Próxima">›</button>
-      </div>
-
       <button id="themeToggleBtn" class="icon-btn" title="Alternar modo claro/escuro"></button>
 
       <button id="gridToggleBtn" class="icon-btn" title="Alternar fundo quadriculado">▦</button>
@@ -536,6 +536,106 @@
 
     <div id="tabs"></div>
 
+    <div id="formatToolbar">
+      <div class="fmt-group">
+        <button class="fmt-btn" id="fmtUl" title="Lista com marcadores">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <circle cx="3" cy="5" r="1.1" fill="currentColor" stroke="none"/>
+            <circle cx="3" cy="10" r="1.1" fill="currentColor" stroke="none"/>
+            <circle cx="3" cy="15" r="1.1" fill="currentColor" stroke="none"/>
+            <line x1="7" y1="5" x2="17" y2="5"/>
+            <line x1="7" y1="10" x2="17" y2="10"/>
+            <line x1="7" y1="15" x2="17" y2="15"/>
+          </svg>
+        </button>
+        <button class="fmt-btn" id="fmtOl" title="Lista numerada">
+          <svg viewBox="0 0 20 20" stroke="none">
+            <text x="0.5" y="6.3" font-size="5.2" fill="currentColor" font-family="inherit">1</text>
+            <text x="0.5" y="11.3" font-size="5.2" fill="currentColor" font-family="inherit">2</text>
+            <text x="0.5" y="16.3" font-size="5.2" fill="currentColor" font-family="inherit">3</text>
+            <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <line x1="7" y1="5" x2="17" y2="5"/>
+              <line x1="7" y1="10" x2="17" y2="10"/>
+              <line x1="7" y1="15" x2="17" y2="15"/>
+            </g>
+          </svg>
+        </button>
+        <button class="fmt-btn" id="fmtAlpha" title="Lista com letras">
+          <svg viewBox="0 0 20 20" stroke="none">
+            <text x="0.5" y="6.3" font-size="5.2" fill="currentColor" font-family="inherit">a</text>
+            <text x="0.5" y="11.3" font-size="5.2" fill="currentColor" font-family="inherit">b</text>
+            <text x="0.5" y="16.3" font-size="5.2" fill="currentColor" font-family="inherit">c</text>
+            <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+              <line x1="7" y1="5" x2="17" y2="5"/>
+              <line x1="7" y1="10" x2="17" y2="10"/>
+              <line x1="7" y1="15" x2="17" y2="15"/>
+            </g>
+          </svg>
+        </button>
+      </div>
+
+      <div class="fmt-sep"></div>
+
+      <div class="fmt-group">
+        <button class="fmt-btn" id="fmtAlignLeft" title="Alinhar à esquerda">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="4" x2="18" y2="4"/><line x1="2" y1="8" x2="13" y2="8"/>
+            <line x1="2" y1="12" x2="18" y2="12"/><line x1="2" y1="16" x2="13" y2="16"/>
+          </svg>
+        </button>
+        <button class="fmt-btn" id="fmtAlignCenter" title="Centralizar">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="4" x2="18" y2="4"/><line x1="4.5" y1="8" x2="15.5" y2="8"/>
+            <line x1="2" y1="12" x2="18" y2="12"/><line x1="4.5" y1="16" x2="15.5" y2="16"/>
+          </svg>
+        </button>
+        <button class="fmt-btn" id="fmtAlignRight" title="Alinhar à direita">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="4" x2="18" y2="4"/><line x1="7" y1="8" x2="18" y2="8"/>
+            <line x1="2" y1="12" x2="18" y2="12"/><line x1="7" y1="16" x2="18" y2="16"/>
+          </svg>
+        </button>
+        <button class="fmt-btn" id="fmtAlignJustify" title="Justificar">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="2" y1="4" x2="18" y2="4"/><line x1="2" y1="8" x2="18" y2="8"/>
+            <line x1="2" y1="12" x2="18" y2="12"/><line x1="2" y1="16" x2="18" y2="16"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="fmt-sep"></div>
+
+      <div class="fmt-group">
+        <button class="fmt-btn fmt-text-glyph" id="fmtBold" title="Negrito">N</button>
+        <button class="fmt-btn fmt-text-glyph" id="fmtItalic" title="Itálico">I</button>
+        <button class="fmt-btn fmt-text-glyph" id="fmtStrike" title="Tachado">S</button>
+      </div>
+
+      <div class="fmt-sep"></div>
+
+      <div class="fmt-group">
+        <div class="fmt-color-wrap">
+          <button class="fmt-color-main" id="fmtHighlightApply" title="Marca-texto">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 3 L17 9 L9 17 L4 18 L5 13 Z"/>
+              <line x1="11" y1="3" x2="17" y2="9"/>
+            </svg>
+            <span class="fmt-swatch" id="fmtHighlightSwatch" style="background:#fff59d"></span>
+          </button>
+          <button class="fmt-color-caret" id="fmtHighlightCaret" title="Escolher cor do marca-texto">▾</button>
+          <div class="fmt-color-dropdown" id="fmtHighlightDropdown"></div>
+        </div>
+        <div class="fmt-color-wrap">
+          <button class="fmt-color-main" id="fmtTextColorApply" title="Cor do texto">
+            <span class="fmt-ico">A</span>
+            <span class="fmt-swatch" id="fmtTextColorSwatch" style="background:#e53935"></span>
+          </button>
+          <button class="fmt-color-caret" id="fmtTextColorCaret" title="Escolher cor do texto">▾</button>
+          <div class="fmt-color-dropdown" id="fmtTextColorDropdown"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="content" contenteditable="true" data-placeholder="Escreva aqui... a primeira palavra vira o título da página" spellcheck="false"></div>
 
     <div id="changePwPanel">
@@ -556,7 +656,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.4</span>
+        <span id="appVersion" title="Versão do site">v1.0.5</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -571,17 +671,6 @@
         <button class="btn solid-danger" id="confirmOkBtn">Excluir</button>
       </div>
     </div>
-  </div>
-
-  <div id="selToolbar">
-    <button class="b" id="btnBold" title="Negrito">B</button>
-    <button class="hi" id="btnHi" title="Marca-texto amarelo"><span class="swatch"></span></button>
-    <button id="btnClear" title="Limpar formatação">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 20H7L3 16C2.5 15.5 2.5 14.5 3 14L13 4C13.5 3.5 14.5 3.5 15 4L21 10C21.5 10.5 21.5 11.5 21 12L11 22" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M8.5 8.5L15.5 15.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-      </svg>
-    </button>
   </div>
 
   <!-- TOUR GUIADO -->
@@ -690,14 +779,7 @@ const mindmapBtn = document.getElementById('mindmapBtn');
 const mindmapDropdown = document.getElementById('mindmapDropdown');
 const mindmapArrowBtn = document.getElementById('mindmapArrowBtn');
 const mindmapBoxBtn = document.getElementById('mindmapBoxBtn');
-const searchInput = document.getElementById('searchInput');
-const searchCount = document.getElementById('searchCount');
-const searchPrev = document.getElementById('searchPrev');
-const searchNext = document.getElementById('searchNext');
-const selToolbar = document.getElementById('selToolbar');
-const btnBold = document.getElementById('btnBold');
-const btnHi = document.getElementById('btnHi');
-const btnClear = document.getElementById('btnClear');
+
 
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const startTourBtn = document.getElementById('startTourBtn');
@@ -985,7 +1067,6 @@ function switchToPage(id){
   const p = pages.find(x => x.id === id);
   contentEl.innerHTML = p ? p.content : '';
   reattachContentImages();
-  clearSearch();
   renderTabs();
   contentEl.focus();
 }
@@ -998,7 +1079,6 @@ function addPage(){
   const p = { id:newId(), content:'' };
   pages.push(p); activePageId = p.id;
   contentEl.innerHTML = '';
-  clearSearch();
   renderTabs(); contentEl.focus();
   scheduleAutosave();
 }
@@ -1023,7 +1103,6 @@ async function deletePage(id){
     activePageId = next.id;
     contentEl.innerHTML = next.content;
     reattachContentImages();
-    clearSearch();
   }
   renderTabs();
   scheduleAutosave();
@@ -1036,7 +1115,6 @@ function openEditor(){
   const active = pages.find(p => p.id === activePageId);
   contentEl.innerHTML = active ? active.content : '';
   reattachContentImages();
-  clearSearch();
   saveStatus.textContent = 'tudo salvo';
   changePwPanel.style.display = 'none';
   renderTabs();
@@ -1071,7 +1149,6 @@ contentEl.addEventListener('input', tryArrowShortcut);
 contentEl.addEventListener('input', () => {
   syncActiveContentFromEditor();
   renderTabs();
-  if(searchInput.value.trim()) scheduleSearch(searchInput.value.trim(), true);
   scheduleAutosave();
 });
 async function doAutosave(){
@@ -1233,201 +1310,145 @@ document.addEventListener('click', (e) => {
   }
 });
 
-/* ---- search ---- */
-let matches = []; // {node, start, end}
-let matchIndex = -1;
-let hasNavigated = false; // só vira true quando o usuário navega de fato (Enter/setas)
-const supportsHighlightApi = !!(window.Highlight && CSS.highlights);
-let searchAllHl = null, searchCurrentHl = null;
-
-function collectTextNodes(root){
-  const nodes = [];
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
-  let n;
-  while(n = walker.nextNode()) nodes.push(n);
-  return nodes;
-}
-function makeMatchRange(m){
-  const range = document.createRange();
-  range.setStart(m.node, m.start);
-  range.setEnd(m.node, m.end);
-  return range;
-}
-function paintHighlights(){
-  if(!supportsHighlightApi) return;
-  if(!matches.length){
-    CSS.highlights.delete('search-all-hl');
-    CSS.highlights.delete('search-current-hl');
-    return;
-  }
-  const ranges = matches.map(makeMatchRange);
-  searchAllHl = new Highlight(...ranges);
-  CSS.highlights.set('search-all-hl', searchAllHl);
-  if(matchIndex >= 0){
-    searchCurrentHl = new Highlight(ranges[matchIndex]);
-    CSS.highlights.set('search-current-hl', searchCurrentHl);
-  }else{
-    CSS.highlights.delete('search-current-hl');
-  }
-}
-let searchDebounceTimer = null;
-function scheduleSearch(query, keepIndex){
-  clearTimeout(searchDebounceTimer);
-  searchDebounceTimer = setTimeout(() => computeMatches(query, keepIndex), 150);
-}
-function computeMatches(query, keepIndex){
-  const prevMatchNode = (keepIndex && matches[matchIndex]) ? matches[matchIndex].node : null;
-  const prevMatchStart = (keepIndex && matches[matchIndex]) ? matches[matchIndex].start : -1;
-  matches = [];
-  matchIndex = -1;
-  if(!keepIndex) hasNavigated = false;
-  if(!query){ updateSearchUI(); paintHighlights(); return; }
-  const q = query.toLowerCase();
-  const nodes = collectTextNodes(contentEl);
-  nodes.forEach(node => {
-    const text = node.textContent.toLowerCase();
-    let from = 0, idx;
-    while((idx = text.indexOf(q, from)) !== -1){
-      matches.push({ node, start: idx, end: idx + q.length });
-      from = idx + q.length;
-    }
-  });
-  if(matches.length){
-    if(keepIndex && prevMatchNode){
-      const found = matches.findIndex(m => m.node === prevMatchNode && m.start === prevMatchStart);
-      matchIndex = found !== -1 ? found : 0;
-    }else{
-      matchIndex = 0;
-    }
-  }
-  // Apenas atualiza a contagem/realce; NÃO move o foco enquanto digita.
-  updateSearchUI();
-  paintHighlights();
-}
-function scrollMatchIntoView(range){
-  const rect = range.getBoundingClientRect();
-  const box = contentEl.getBoundingClientRect();
-  if(rect.top >= box.top && rect.bottom <= box.bottom) return; // já visível
-  const delta = (rect.top - box.top) - (box.height / 2) + (rect.height / 2);
-  contentEl.scrollBy({ top: delta, behavior:'smooth' });
-}
-function goToMatch(i){
-  if(!matches.length) return;
-  matchIndex = ((i % matches.length) + matches.length) % matches.length;
-  hasNavigated = true;
-  const range = makeMatchRange(matches[matchIndex]);
-  scrollMatchIntoView(range);
-  paintHighlights();
-  updateSearchUI();
-}
-function navigate(direction){
-  // primeira navegação vai para o match atual (0); as seguintes avançam/recuam
-  if(!hasNavigated){ goToMatch(matchIndex); }
-  else { goToMatch(matchIndex + direction); }
-}
-function updateSearchUI(){
-  if(!matches.length){
-    searchCount.textContent = searchInput.value ? '0/0' : '';
-  }else{
-    searchCount.textContent = (matchIndex+1) + '/' + matches.length;
-  }
-  searchPrev.disabled = matches.length === 0;
-  searchNext.disabled = matches.length === 0;
-}
-searchInput.addEventListener('input', () => scheduleSearch(searchInput.value.trim()));
-searchInput.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    clearTimeout(searchDebounceTimer);
-    computeMatches(searchInput.value.trim(), true);
-    navigate(e.shiftKey ? -1 : 1);
-  }
-  if(e.key === 'Escape'){ clearTimeout(searchDebounceTimer); searchInput.value = ''; computeMatches(''); searchInput.blur(); }
-});
-searchNext.addEventListener('click', () => navigate(1));
-searchPrev.addEventListener('click', () => navigate(-1));
-function clearSearch(){
-  searchInput.value = '';
-  computeMatches('');
-}
-
-/* ---- selection formatting toolbar ---- */
-function showSelToolbar(){
-  const sel = window.getSelection();
-  if(!sel || sel.rangeCount === 0 || sel.isCollapsed){ hideSelToolbar(); return; }
-  const anchor = sel.anchorNode;
-  if(!anchor || !contentEl.contains(anchor)){ hideSelToolbar(); return; }
-  const rect = sel.getRangeAt(0).getBoundingClientRect();
-  if(rect.width === 0 && rect.height === 0){ hideSelToolbar(); return; }
-  selToolbar.style.display = 'flex';
-  const top = rect.top - 38;
-  const left = rect.left + rect.width/2 - 30;
-  selToolbar.style.top = Math.max(6, top) + 'px';
-  selToolbar.style.left = Math.max(6, left) + 'px';
-}
-function hideSelToolbar(){ selToolbar.style.display = 'none'; }
-
-document.addEventListener('selectionchange', () => {
-  const sel = window.getSelection();
-  if(sel && !sel.isCollapsed && sel.anchorNode && contentEl.contains(sel.anchorNode)){
-    showSelToolbar();
-  }else{
-    hideSelToolbar();
-  }
-});
-contentEl.addEventListener('mouseup', showSelToolbar);
-contentEl.addEventListener('keyup', showSelToolbar);
-
-btnBold.addEventListener('mousedown', (e) => { e.preventDefault(); document.execCommand('bold'); });
-btnHi.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  document.execCommand('hiliteColor', false, '#fff59d') || document.execCommand('backColor', false, '#fff59d');
-});
-btnClear.addEventListener('mousedown', (e) => {
-  e.preventDefault();
-  const sel = window.getSelection();
-  if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-  const range = sel.getRangeAt(0);
-  if(!contentEl.contains(range.commonAncestorContainer)) return;
-
-  // extrai só o trecho selecionado (o Range já corta/divide qualquer <mark>/<b>
-  // que comece ou termine no meio da seleção, preservando o resto intacto)
-  const frag = range.extractContents();
-  const tempDiv = document.createElement('div');
-  tempDiv.appendChild(frag);
-
-  // remove estilo de negrito/marca-texto de tudo dentro do trecho extraído
-  tempDiv.querySelectorAll('*').forEach(el => {
-    el.style.backgroundColor = '';
-    el.style.fontWeight = '';
-  });
-  // desembrulha as tags semânticas, mantendo o texto
-  tempDiv.querySelectorAll('mark, b, strong').forEach(el => {
-    const parent = el.parentNode;
-    while(el.firstChild) parent.insertBefore(el.firstChild, el);
-    parent.removeChild(el);
-  });
-
-  const nodesToInsert = Array.from(tempDiv.childNodes);
-  const cleanFrag = document.createDocumentFragment();
-  nodesToInsert.forEach(n => cleanFrag.appendChild(n));
-
-  range.insertNode(cleanFrag);
-
-  // reseleciona exatamente o trecho que acabou de ser limpo
-  if(nodesToInsert.length){
-    const newRange = document.createRange();
-    newRange.setStartBefore(nodesToInsert[0]);
-    newRange.setEndAfter(nodesToInsert[nodesToInsert.length - 1]);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-  }
-
-  contentEl.normalize();
+/* ---------------------------------------------------------------
+   BARRA DE FORMATAÇÃO (listas, alinhamento, negrito/itálico/tachado,
+   marca-texto e cor do texto)
+--------------------------------------------------------------- */
+function fmtExec(cmd, value){
+  contentEl.focus();
+  document.execCommand(cmd, false, value === undefined ? null : value);
   syncActiveContentFromEditor();
+  renderTabs();
   scheduleAutosave();
+  updateFmtActiveStates();
+}
+
+function setCurrentListStyle(type){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0) return;
+  let node = sel.getRangeAt(0).startContainer;
+  while(node && node !== contentEl){
+    if(node.nodeName === 'OL'){ node.style.listStyleType = type; break; }
+    node = node.parentNode;
+  }
+}
+
+[
+  ['fmtUl', () => fmtExec('insertUnorderedList')],
+  ['fmtOl', () => { fmtExec('insertOrderedList'); setCurrentListStyle('decimal'); }],
+  ['fmtAlpha', () => { fmtExec('insertOrderedList'); setCurrentListStyle('lower-alpha'); }],
+  ['fmtAlignLeft', () => fmtExec('justifyLeft')],
+  ['fmtAlignCenter', () => fmtExec('justifyCenter')],
+  ['fmtAlignRight', () => fmtExec('justifyRight')],
+  ['fmtAlignJustify', () => fmtExec('justifyFull')],
+  ['fmtBold', () => fmtExec('bold')],
+  ['fmtItalic', () => fmtExec('italic')],
+  ['fmtStrike', () => fmtExec('strikeThrough')],
+].forEach(([id, fn]) => {
+  const btn = document.getElementById(id);
+  btn.addEventListener('mousedown', e => e.preventDefault());
+  btn.addEventListener('click', fn);
 });
-selToolbar.addEventListener('mousedown', (e) => e.preventDefault());
+
+const HIGHLIGHT_COLORS = ['#fff59d','#ffd699','#ffb3b3','#b3ffb3','#b3e0ff','#d9b3ff','#e0e0e0','#ffffff'];
+const TEXT_COLORS = ['#1a1a1a','#e53935','#1e88e5','#2e7d32','#f57c00','#8e24aa','#00838f','#ffffff'];
+
+let currentHighlight = '#fff59d';
+let currentTextColor = '#e53935';
+
+function buildColorDropdown(container, colors, onPick, removeTitle, removeAction){
+  colors.forEach(c => {
+    const b = document.createElement('button');
+    b.style.background = c;
+    b.title = c;
+    b.addEventListener('mousedown', e => e.preventDefault());
+    b.addEventListener('click', e => { e.stopPropagation(); onPick(c); container.classList.remove('open'); });
+    container.appendChild(b);
+  });
+  const noneBtn = document.createElement('button');
+  noneBtn.className = 'fmt-none';
+  noneBtn.textContent = '✕';
+  noneBtn.title = removeTitle;
+  noneBtn.addEventListener('mousedown', e => e.preventDefault());
+  noneBtn.addEventListener('click', e => { e.stopPropagation(); removeAction(); container.classList.remove('open'); });
+  container.appendChild(noneBtn);
+}
+
+const highlightDropdown = document.getElementById('fmtHighlightDropdown');
+const highlightSwatch = document.getElementById('fmtHighlightSwatch');
+buildColorDropdown(
+  highlightDropdown, HIGHLIGHT_COLORS,
+  c => { currentHighlight = c; highlightSwatch.style.background = c; fmtExec('hiliteColor', c); },
+  'Remover marca-texto',
+  () => fmtExec('hiliteColor', 'transparent')
+);
+
+const fmtHighlightApply = document.getElementById('fmtHighlightApply');
+const fmtHighlightCaret = document.getElementById('fmtHighlightCaret');
+fmtHighlightApply.addEventListener('mousedown', e => e.preventDefault());
+fmtHighlightApply.addEventListener('click', () => fmtExec('hiliteColor', currentHighlight));
+fmtHighlightCaret.addEventListener('mousedown', e => e.preventDefault());
+fmtHighlightCaret.addEventListener('click', e => {
+  e.stopPropagation();
+  textColorDropdown.classList.remove('open');
+  highlightDropdown.classList.toggle('open');
+});
+
+const textColorDropdown = document.getElementById('fmtTextColorDropdown');
+const textColorSwatch = document.getElementById('fmtTextColorSwatch');
+buildColorDropdown(
+  textColorDropdown, TEXT_COLORS,
+  c => { currentTextColor = c; textColorSwatch.style.background = c; fmtExec('foreColor', c); },
+  'Cor padrão do texto',
+  () => fmtExec('foreColor', getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#1a1a1a')
+);
+
+const fmtTextColorApply = document.getElementById('fmtTextColorApply');
+const fmtTextColorCaret = document.getElementById('fmtTextColorCaret');
+fmtTextColorApply.addEventListener('mousedown', e => e.preventDefault());
+fmtTextColorApply.addEventListener('click', () => fmtExec('foreColor', currentTextColor));
+fmtTextColorCaret.addEventListener('mousedown', e => e.preventDefault());
+fmtTextColorCaret.addEventListener('click', e => {
+  e.stopPropagation();
+  highlightDropdown.classList.remove('open');
+  textColorDropdown.classList.toggle('open');
+});
+
+document.addEventListener('click', e => {
+  if(!highlightDropdown.contains(e.target) && e.target !== fmtHighlightCaret){
+    highlightDropdown.classList.remove('open');
+  }
+  if(!textColorDropdown.contains(e.target) && e.target !== fmtTextColorCaret){
+    textColorDropdown.classList.remove('open');
+  }
+});
+
+/* realça o botão correspondente à formatação ativa na posição do cursor */
+const FMT_STATE_BTNS = {
+  bold: document.getElementById('fmtBold'),
+  italic: document.getElementById('fmtItalic'),
+  strikeThrough: document.getElementById('fmtStrike'),
+  justifyLeft: document.getElementById('fmtAlignLeft'),
+  justifyCenter: document.getElementById('fmtAlignCenter'),
+  justifyRight: document.getElementById('fmtAlignRight'),
+  justifyFull: document.getElementById('fmtAlignJustify'),
+  insertUnorderedList: document.getElementById('fmtUl'),
+  insertOrderedList: document.getElementById('fmtOl'),
+};
+function updateFmtActiveStates(){
+  Object.entries(FMT_STATE_BTNS).forEach(([cmd, btn]) => {
+    if(!btn) return;
+    let state = false;
+    try{ state = document.queryCommandState(cmd); }catch(e){}
+    btn.classList.toggle('active', state);
+  });
+}
+contentEl.addEventListener('keyup', updateFmtActiveStates);
+contentEl.addEventListener('mouseup', updateFmtActiveStates);
+contentEl.addEventListener('focus', updateFmtActiveStates);
+document.addEventListener('selectionchange', () => {
+  if(document.activeElement === contentEl) updateFmtActiveStates();
+});
 
 /* ---------------------------------------------------------------
    COLAR TEXTO: sempre com a fonte/tamanho padrão do bloco
@@ -1945,19 +1966,9 @@ const tourSteps = [
     text: 'Aqui é onde você escreve. A primeira palavra que você digitar vira automaticamente o título desta página.'
   },
   {
-    selector: '#content',
-    title: 'Negrito e marca-texto',
-    text: 'Selecione um trecho do texto (com o mouse ou o dedo) para ver os botões de negrito e marca-texto amarelo aparecerem.'
-  },
-  {
     selector: '.tab-add',
     title: 'Várias páginas',
     text: 'Clique no + para criar uma nova página. Cada uma vira uma aba aqui em cima, e você pode alternar entre elas quando quiser.'
-  },
-  {
-    selector: '.search-box',
-    title: 'Buscar no texto',
-    text: 'Digite uma palavra para ver quantas vezes ela aparece. Aperte Enter (ou clique nas setinhas ‹ ›) para pular de uma ocorrência para a próxima.'
   },
   {
     selector: '#menuBtn',
