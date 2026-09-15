@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.6
+  Versão atual deste arquivo: v1.0.7
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -407,6 +407,51 @@
   #content .textbox-wrap.dragging,
   #content .textbox-wrap.resizing{ opacity:.85; }
 
+  /* linha de título: texto em maiúsculas seguido de uma linha contínua (~5cm) */
+  #content .title-line{
+    display:inline-block;
+    width:5cm;
+    height:0;
+    border-bottom:2px solid var(--text);
+    vertical-align:middle;
+    margin-left:3px;
+  }
+
+  /* linha que corta a página (quebra de página) */
+  #content hr.page-break-hr{
+    display:block;
+    border:none;
+    border-top:2px solid var(--text);
+    width:100%;
+    height:0;
+    margin:22px 0;
+    opacity:.85;
+  }
+
+  /* ---------------- IMPRESSÃO / EXPORTAR EM PDF ---------------- */
+  @media print{
+    html, body{ background:#fff !important; height:auto !important; }
+    #gate, .titlebar, #tabs, #formatToolbar, #changePwPanel, .statusbar,
+    #confirmOverlay, #tourRoot{ display:none !important; }
+    #editor{ display:block !important; height:auto !important; }
+    #content{
+      position:static !important;
+      overflow:visible !important;
+      height:auto !important;
+      padding:0 !important;
+      background:#fff !important;
+      color:#000 !important;
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    #content mark, #content [style*="background-color"]{
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    #content hr.page-break-hr{
+      border:none; height:0; margin:0; visibility:hidden;
+      page-break-after:always; break-after:page;
+    }
+  }
+
   .statusbar{
     flex:none; display:flex; justify-content:space-between; align-items:center;
     padding:6px 12px; border-top:1px solid var(--border);
@@ -501,6 +546,7 @@
         <button id="menuBtn" title="Mais opções">⋮</button>
         <div id="menuDropdown">
           <button class="link-btn" id="startTourBtn">Como usar o site</button>
+          <button class="link-btn" id="exportPdfBtn">Exportar em PDF</button>
           <button class="link-btn" id="togglePwBtn">Trocar senha</button>
           <button class="link-btn danger" id="deleteAccountBtn">Excluir conta</button>
           <button class="link-btn" id="exitBtn">Sair</button>
@@ -511,6 +557,23 @@
     <div id="tabs"></div>
 
     <div id="formatToolbar">
+      <div class="fmt-group">
+        <button class="fmt-btn" id="fmtUndo" title="Desfazer (Ctrl+Z / ⌘Z)">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 5 L2 9 L6 13"/>
+            <path d="M2 9 H12 a5 5 0 0 1 0 10 H8"/>
+          </svg>
+        </button>
+        <button class="fmt-btn" id="fmtRedo" title="Refazer (Ctrl+Shift+Z / ⌘⇧Z)">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 5 L18 9 L14 13"/>
+            <path d="M18 9 H8 a5 5 0 0 0 0 10 H12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="fmt-sep"></div>
+
       <div class="fmt-group">
         <button class="fmt-btn" id="fmtUl" title="Lista com marcadores">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
@@ -588,6 +651,18 @@
       <div class="fmt-sep"></div>
 
       <div class="fmt-group">
+        <button class="fmt-btn fmt-text-glyph" id="fmtUppercase" title="Colocar seleção em MAIÚSCULAS" style="font-size:11px;">AA</button>
+        <button class="fmt-btn" id="fmtTitle" title="Formatar como título (MAIÚSCULAS + linha)">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <text x="1" y="9" font-size="8" fill="currentColor" stroke="none" font-family="inherit" font-weight="700">T</text>
+            <line x1="1" y1="15" x2="19" y2="15"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="fmt-sep"></div>
+
+      <div class="fmt-group">
         <div class="fmt-color-wrap">
           <button class="fmt-color-main" id="fmtHighlightApply" title="Marca-texto">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
@@ -616,6 +691,12 @@
         <button class="fmt-btn fmt-text-glyph" id="gridToggleBtn" title="Alternar fundo quadriculado">▦</button>
         <button class="fmt-btn fmt-text-glyph" id="mindmapArrowBtn" title="Criar seta">↗</button>
         <button class="fmt-btn fmt-text-glyph" id="mindmapBoxBtn" title="Criar caixa de texto">▭</button>
+        <button class="fmt-btn" id="pageBreakBtn" title="Inserir linha de quebra de página">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+            <line x1="1" y1="7" x2="19" y2="7"/>
+            <line x1="1" y1="13" x2="19" y2="13" stroke-dasharray="2.4 2.4"/>
+          </svg>
+        </button>
         <div class="fmt-menu-wrap">
           <button class="fmt-btn fmt-text-glyph" id="emojiBtn" title="Inserir emoji">😊</button>
           <div id="emojiDropdown"></div>
@@ -643,7 +724,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.6</span>
+        <span id="appVersion" title="Versão do site">v1.0.7</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -1325,6 +1406,124 @@ function setCurrentListStyle(type){
   btn.addEventListener('click', fn);
 });
 
+/* ---------------------------------------------------------------
+   DESFAZER / REFAZER (botões + Ctrl+Z / Cmd+Z e Ctrl+Shift+Z / Cmd+Shift+Z)
+--------------------------------------------------------------- */
+const fmtUndoBtn = document.getElementById('fmtUndo');
+const fmtRedoBtn = document.getElementById('fmtRedo');
+
+function doUndo(){
+  contentEl.focus();
+  document.execCommand('undo');
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+}
+function doRedo(){
+  contentEl.focus();
+  document.execCommand('redo');
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+}
+[fmtUndoBtn, fmtRedoBtn].forEach(btn => btn.addEventListener('mousedown', e => e.preventDefault()));
+fmtUndoBtn.addEventListener('click', doUndo);
+fmtRedoBtn.addEventListener('click', doRedo);
+
+contentEl.addEventListener('keydown', (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if(!mod) return;
+  const key = e.key.toLowerCase();
+  if(key === 'z' && !e.shiftKey){
+    e.preventDefault();
+    doUndo();
+  }else if((key === 'z' && e.shiftKey) || key === 'y'){
+    e.preventDefault();
+    doRedo();
+  }
+});
+
+/* ---------------------------------------------------------------
+   MAIÚSCULAS: transforma o texto selecionado em letras maiúsculas
+--------------------------------------------------------------- */
+function applyUppercaseToSelection(){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  if(!contentEl.contains(range.commonAncestorContainer)) return;
+  const frag = range.cloneContents();
+  const walker = document.createTreeWalker(frag, NodeFilter.SHOW_TEXT);
+  let node;
+  while((node = walker.nextNode())){
+    node.textContent = node.textContent.toUpperCase();
+  }
+  const tmp = document.createElement('div');
+  tmp.appendChild(frag);
+  contentEl.focus();
+  document.execCommand('insertHTML', false, tmp.innerHTML);
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+}
+const fmtUppercaseBtn = document.getElementById('fmtUppercase');
+fmtUppercaseBtn.addEventListener('mousedown', e => e.preventDefault());
+fmtUppercaseBtn.addEventListener('click', applyUppercaseToSelection);
+
+/* ---------------------------------------------------------------
+   TÍTULO: texto selecionado vira MAIÚSCULAS seguido de uma linha
+   contínua (não tracejada) de aproximadamente 5cm
+--------------------------------------------------------------- */
+function applyTitleFormat(){
+  const sel = window.getSelection();
+  if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  const range = sel.getRangeAt(0);
+  if(!contentEl.contains(range.commonAncestorContainer)) return;
+  const text = range.toString().toUpperCase();
+  if(!text) return;
+  const span = document.createElement('span');
+  span.textContent = text;
+  const wrapper = document.createElement('span');
+  wrapper.appendChild(span);
+  const line = document.createElement('span');
+  line.className = 'title-line';
+  line.setAttribute('contenteditable', 'false');
+  wrapper.appendChild(line);
+  contentEl.focus();
+  document.execCommand('insertHTML', false, wrapper.innerHTML);
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+}
+const fmtTitleBtn = document.getElementById('fmtTitle');
+fmtTitleBtn.addEventListener('mousedown', e => e.preventDefault());
+fmtTitleBtn.addEventListener('click', applyTitleFormat);
+
+/* ---------------------------------------------------------------
+   LINHA CORTA PÁGINA: linha reta de ponta a ponta da página,
+   usada para dividir o texto em páginas (1, 2, 3...) na hora de
+   exportar/imprimir em PDF
+--------------------------------------------------------------- */
+function insertPageBreakLine(){
+  contentEl.focus();
+  document.execCommand('insertHTML', false, '<hr class="page-break-hr">');
+  syncActiveContentFromEditor();
+  renderTabs();
+  scheduleAutosave();
+}
+const pageBreakBtn = document.getElementById('pageBreakBtn');
+pageBreakBtn.addEventListener('mousedown', e => e.preventDefault());
+pageBreakBtn.addEventListener('click', insertPageBreakLine);
+
+/* ---------------------------------------------------------------
+   EXPORTAR EM PDF: usa a impressão do navegador (Salvar como PDF)
+--------------------------------------------------------------- */
+const exportPdfBtn = document.getElementById('exportPdfBtn');
+exportPdfBtn.addEventListener('click', () => {
+  menuDropdown.classList.remove('open');
+  syncActiveContentFromEditor();
+  window.print();
+});
+
 const HIGHLIGHT_COLORS = ['#fff59d','#ffd699','#ffb3b3','#b3ffb3','#b3e0ff','#d9b3ff','#e0e0e0','#ffffff'];
 const TEXT_COLORS = ['#1a1a1a','#e53935','#1e88e5','#2e7d32','#f57c00','#8e24aa','#00838f','#ffffff'];
 
@@ -1432,9 +1631,22 @@ document.addEventListener('selectionchange', () => {
 --------------------------------------------------------------- */
 const BLOCK_TAGS = new Set(['P','DIV','LI','TR','H1','H2','H3','H4','H5','H6','BLOCKQUOTE']);
 
+function isNearWhiteOrTransparent(bg){
+  if(!bg || bg === '' || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') return true;
+  const m = bg.match(/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)/i);
+  if(m){
+    const r = parseFloat(m[1]), g = parseFloat(m[2]), b = parseFloat(m[3]);
+    const a = m[4] !== undefined ? parseFloat(m[4]) : 1;
+    if(a <= 0.05) return true; // praticamente invisível
+    if(r >= 245 && g >= 245 && b >= 245) return true; // branco/quase-branco vindo de outro editor
+  }
+  if(/^#?fff(fff)?$/i.test(bg.replace('#',''))) return true;
+  return false;
+}
 function isHighlighted(node){
+  if(node.tagName === 'MARK') return true;
   const bg = node.style && node.style.backgroundColor;
-  return node.tagName === 'MARK' || (bg && bg !== '' && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)');
+  return !isNearWhiteOrTransparent(bg);
 }
 function isBold(node){
   if(node.tagName === 'B' || node.tagName === 'STRONG') return true;
