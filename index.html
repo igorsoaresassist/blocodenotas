@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.1.2
+  Versão atual deste arquivo: v1.1.1
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -547,7 +547,8 @@
     </div>
 
     <div id="formatToolbar">
-      <div class="fmt-group" id="fmtGroupHistory">
+      <div class="fmt-group">
+        <button class="fmt-btn" id="fmtUndo" title="Desfazer (Ctrl+Z / ⌘Z)">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 5 L2 9 L6 13"/>
             <path d="M2 9 H12 a5 5 0 0 1 0 10 H8"/>
@@ -563,7 +564,8 @@
 
       <div class="fmt-sep"></div>
 
-      <div class="fmt-group" id="fmtGroupLists">
+      <div class="fmt-group">
+        <button class="fmt-btn" id="fmtUl" title="Lista com marcadores">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
             <circle cx="3" cy="5" r="1.1" fill="currentColor" stroke="none"/>
             <circle cx="3" cy="10" r="1.1" fill="currentColor" stroke="none"/>
@@ -601,7 +603,8 @@
 
       <div class="fmt-sep"></div>
 
-      <div class="fmt-group" id="fmtGroupAlign">
+      <div class="fmt-group">
+        <button class="fmt-btn" id="fmtAlignLeft" title="Alinhar à esquerda">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
             <line x1="2" y1="4" x2="18" y2="4"/><line x1="2" y1="8" x2="13" y2="8"/>
             <line x1="2" y1="12" x2="18" y2="12"/><line x1="2" y1="16" x2="13" y2="16"/>
@@ -629,19 +632,23 @@
 
       <div class="fmt-sep"></div>
 
-      <div class="fmt-group" id="fmtGroupStyle">N</button>
+      <div class="fmt-group">
+        <button class="fmt-btn fmt-text-glyph" id="fmtBold" title="Negrito">N</button>
         <button class="fmt-btn fmt-text-glyph" id="fmtItalic" title="Itálico">I</button>
         <button class="fmt-btn fmt-text-glyph" id="fmtStrike" title="Tachado">S</button>
       </div>
 
       <div class="fmt-sep"></div>
 
-      <div class="fmt-group" id="fmtGroupCase">
+      <div class="fmt-group">
+        <button class="fmt-btn fmt-text-glyph" id="fmtUppercase" title="Colocar seleção em MAIÚSCULAS" style="font-size:11px;">AA</button>
       </div>
 
       <div class="fmt-sep"></div>
 
-      <div class="fmt-group" id="fmtGroupColor">
+      <div class="fmt-group">
+        <div class="fmt-color-wrap">
+          <button class="fmt-color-main" id="fmtHighlightApply" title="Marca-texto">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 3 L17 9 L9 17 L4 18 L5 13 Z"/>
               <line x1="11" y1="3" x2="17" y2="9"/>
@@ -663,7 +670,8 @@
 
       <div class="fmt-sep"></div>
 
-      <div class="fmt-group" id="fmtGroupExtras">
+      <div class="fmt-group">
+        <button class="fmt-btn fmt-text-glyph" id="themeToggleBtn" title="Alternar modo claro/escuro"></button>
         <button class="fmt-btn fmt-text-glyph" id="gridToggleBtn" title="Alternar fundo quadriculado">▦</button>
         <button class="fmt-btn fmt-text-glyph" id="mindmapArrowBtn" title="Criar seta">↗</button>
         <button class="fmt-btn fmt-text-glyph" id="mindmapBoxBtn" title="Criar caixa de texto">▭</button>
@@ -700,7 +708,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.1.2</span>
+        <span id="appVersion" title="Versão do site">v1.1.1</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -2151,41 +2159,6 @@ const tourSteps = [
     selector: '#content',
     title: 'Sua página',
     text: 'Aqui é onde você escreve. A primeira palavra que você digitar vira automaticamente o título desta página.'
-  },
-  {
-    selector: '#fmtGroupHistory',
-    title: 'Desfazer e refazer',
-    text: 'A primeira seta desfaz a última ação (Ctrl+Z) e a segunda refaz o que foi desfeito (Ctrl+Shift+Z).'
-  },
-  {
-    selector: '#fmtGroupLists',
-    title: 'Listas',
-    text: 'Transformam o texto selecionado em lista: com marcadores (bolinhas), numerada (1, 2, 3) ou com letras (a, b, c).'
-  },
-  {
-    selector: '#fmtGroupAlign',
-    title: 'Alinhamento',
-    text: 'Alinham o parágrafo à esquerda, ao centro, à direita, ou justificado (esticando o texto nas duas margens).'
-  },
-  {
-    selector: '#fmtGroupStyle',
-    title: 'Negrito, itálico e tachado',
-    text: 'N deixa o texto selecionado em negrito, I em itálico, e S risca o texto por cima (tachado).'
-  },
-  {
-    selector: '#fmtGroupCase',
-    title: 'Maiúsculas',
-    text: 'O botão AA transforma o texto selecionado em MAIÚSCULAS na hora, sem precisar reescrever nada.'
-  },
-  {
-    selector: '#fmtGroupColor',
-    title: 'Marca-texto e cor da fonte',
-    text: 'O primeiro ícone aplica marca-texto (highlight) atrás do texto selecionado, e o segundo (A) pinta a cor da letra. Clique na setinha ao lado de cada um para escolher outra cor.'
-  },
-  {
-    selector: '#fmtGroupExtras',
-    title: 'Outras ferramentas',
-    text: 'Aqui você alterna entre modo claro e escuro, liga um fundo quadriculado, cria setas e caixas de texto para montar mapas mentais, insere uma linha de quebra de página, e adiciona emojis.'
   },
   {
     selector: '.tab-add',
