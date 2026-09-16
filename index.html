@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.7
+  Versão atual deste arquivo: v1.0.8
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -243,14 +243,16 @@
 
   /* tabs */
   #tabs{
-    flex:none; display:flex; align-items:stretch; overflow-x:auto;
+    flex:none; display:flex; align-items:stretch; flex-wrap:wrap;
+    overflow-x:auto; overflow-y:hidden;
     background:var(--tab-bg); border-bottom:1px solid var(--border);
   }
   .tab{
     display:flex;align-items:center;gap:8px;
     padding:8px 10px 8px 14px; font-size:12.5px;
-    border-right:1px solid var(--border); color:var(--muted);
-    cursor:grab; white-space:nowrap; max-width:180px; background:var(--tab-bg);
+    border-right:1px solid var(--border); border-bottom:1px solid var(--border);
+    color:var(--muted);
+    cursor:grab; white-space:nowrap; max-width:180px; flex:0 0 auto; background:var(--tab-bg);
     position:relative;
   }
   .tab.tab-dragging{
@@ -407,25 +409,15 @@
   #content .textbox-wrap.dragging,
   #content .textbox-wrap.resizing{ opacity:.85; }
 
-  /* linha de título: texto em maiúsculas seguido de uma linha contínua (~5cm) */
-  #content .title-line{
-    display:inline-block;
-    width:5cm;
-    height:0;
-    border-bottom:2px solid var(--text);
-    vertical-align:middle;
-    margin-left:3px;
-  }
-
   /* linha que corta a página (quebra de página) */
   #content hr.page-break-hr{
     display:block;
     border:none;
-    border-top:2px solid var(--text);
+    border-top:1px solid var(--text);
     width:100%;
     height:0;
     margin:22px 0;
-    opacity:.85;
+    opacity:.6;
   }
 
   /* ---------------- IMPRESSÃO / EXPORTAR EM PDF ---------------- */
@@ -652,12 +644,6 @@
 
       <div class="fmt-group">
         <button class="fmt-btn fmt-text-glyph" id="fmtUppercase" title="Colocar seleção em MAIÚSCULAS" style="font-size:11px;">AA</button>
-        <button class="fmt-btn" id="fmtTitle" title="Formatar como título (MAIÚSCULAS + linha)">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
-            <text x="1" y="9" font-size="8" fill="currentColor" stroke="none" font-family="inherit" font-weight="700">T</text>
-            <line x1="1" y1="15" x2="19" y2="15"/>
-          </svg>
-        </button>
       </div>
 
       <div class="fmt-sep"></div>
@@ -724,7 +710,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.7</span>
+        <span id="appVersion" title="Versão do site">v1.0.8</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -1044,7 +1030,60 @@ function renderTabs(){
   addTab.addEventListener('click', addPage);
   tabsEl.appendChild(addTab);
   pageCount.textContent = pages.length + (pages.length === 1 ? ' página' : ' páginas');
+  layoutTabs();
 }
+
+/* ---------------------------------------------------------------
+   Distribui as abas em no máximo 2 linhas: quando não cabem todas
+   numa linha só, elas encolhem (linha de cima e linha de baixo) e
+   são divididas de forma equilibrada entre as duas linhas, em vez
+   de encher a primeira linha e deixar a segunda quase vazia.
+--------------------------------------------------------------- */
+const TAB_MIN_W = 64;
+const TAB_MAX_W = 180;
+const TAB_ADD_W = 38;
+
+function layoutTabs(){
+  const tabs = Array.from(tabsEl.querySelectorAll('.tab'));
+  if(!tabs.length) return;
+
+  // reseta para o tamanho natural antes de medir
+  tabs.forEach(t => { t.style.flex = ''; t.style.width = ''; t.style.maxWidth = TAB_MAX_W + 'px'; });
+
+  const containerWidth = tabsEl.clientWidth;
+  const n = tabs.length;
+  const fitsOneRow = Math.max(1, Math.floor((containerWidth - TAB_ADD_W) / TAB_MAX_W));
+
+  if(n <= fitsOneRow){
+    // cabe tudo numa linha só, tamanho normal — nada a fazer
+    return;
+  }
+
+  // não cabe: divide em 2 linhas de forma equilibrada (metade em cada)
+  const row1Count = Math.ceil(n / 2);
+  const row2Count = n - row1Count;
+
+  let w1 = Math.floor(containerWidth / row1Count);
+  w1 = Math.max(TAB_MIN_W, Math.min(TAB_MAX_W, w1));
+
+  let w2 = row2Count > 0
+    ? Math.floor((containerWidth - TAB_ADD_W) / row2Count)
+    : containerWidth;
+  w2 = Math.max(TAB_MIN_W, Math.min(TAB_MAX_W, w2));
+
+  tabs.forEach((t, i) => {
+    const w = i < row1Count ? w1 : w2;
+    t.style.flex = `0 0 ${w}px`;
+    t.style.width = w + 'px';
+    t.style.maxWidth = w + 'px';
+  });
+}
+
+let tabsLayoutResizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(tabsLayoutResizeTimer);
+  tabsLayoutResizeTimer = setTimeout(layoutTabs, 120);
+});
 
 /* ---- arrastar abas para reordenar as páginas ----
    A aba arrastada segue o ponteiro visualmente (transform), enquanto um
@@ -1468,35 +1507,6 @@ function applyUppercaseToSelection(){
 const fmtUppercaseBtn = document.getElementById('fmtUppercase');
 fmtUppercaseBtn.addEventListener('mousedown', e => e.preventDefault());
 fmtUppercaseBtn.addEventListener('click', applyUppercaseToSelection);
-
-/* ---------------------------------------------------------------
-   TÍTULO: texto selecionado vira MAIÚSCULAS seguido de uma linha
-   contínua (não tracejada) de aproximadamente 5cm
---------------------------------------------------------------- */
-function applyTitleFormat(){
-  const sel = window.getSelection();
-  if(!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
-  const range = sel.getRangeAt(0);
-  if(!contentEl.contains(range.commonAncestorContainer)) return;
-  const text = range.toString().toUpperCase();
-  if(!text) return;
-  const span = document.createElement('span');
-  span.textContent = text;
-  const wrapper = document.createElement('span');
-  wrapper.appendChild(span);
-  const line = document.createElement('span');
-  line.className = 'title-line';
-  line.setAttribute('contenteditable', 'false');
-  wrapper.appendChild(line);
-  contentEl.focus();
-  document.execCommand('insertHTML', false, wrapper.innerHTML);
-  syncActiveContentFromEditor();
-  renderTabs();
-  scheduleAutosave();
-}
-const fmtTitleBtn = document.getElementById('fmtTitle');
-fmtTitleBtn.addEventListener('mousedown', e => e.preventDefault());
-fmtTitleBtn.addEventListener('click', applyTitleFormat);
 
 /* ---------------------------------------------------------------
    LINHA CORTA PÁGINA: linha reta de ponta a ponta da página,
