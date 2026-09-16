@@ -13,7 +13,7 @@
       (exemplo: v1.0.9 -> v1.1.0)
     - quando o MINOR passaria de 9, ele volta a 0 e o MAJOR soma 1
       (exemplo: v1.9.9 -> v2.0.0)
-  Versão atual deste arquivo: v1.0.9
+  Versão atual deste arquivo: v1.1.0
   ===================================================================
 -->
 <html lang="pt-BR">
@@ -249,11 +249,11 @@
     padding:4px 6px; gap:2px;
   }
   .tab{
-    display:flex;align-items:center;gap:6px;
-    padding:5px 10px; font-size:12px;
-    border-radius:5px;
+    display:flex;align-items:center;gap:5px;
+    padding:4px 8px; font-size:11.5px;
+    border:1px solid var(--border); border-radius:5px;
     color:var(--muted);
-    cursor:grab; white-space:nowrap; max-width:150px; flex:0 0 auto; background:transparent;
+    cursor:grab; white-space:nowrap; max-width:110px; flex:0 0 auto; background:transparent;
     position:relative;
   }
   .tab:hover{ background:rgba(0,0,0,0.045); color:var(--text); }
@@ -722,7 +722,7 @@
           - quando o patch chegar a 9 e for incrementado, ele vira 0 e o minor sobe 1 (ex.: v1.0.9 -> v1.1.0)
           - quando o minor chegar a 9 e for incrementado, ele vira 0 e o major sobe 1 (ex.: v1.9.x -> v2.0.0)
         -->
-        <span id="appVersion" title="Versão do site">v1.0.9</span>
+        <span id="appVersion" title="Versão do site">v1.1.0</span>
       </div>
       <span id="pageCount"></span>
     </div>
@@ -1051,9 +1051,9 @@ function renderTabs(){
    são divididas de forma equilibrada entre as duas linhas, em vez
    de encher a primeira linha e deixar a segunda quase vazia.
 --------------------------------------------------------------- */
-const TAB_MIN_W = 56;
-const TAB_MAX_W = 150;
-const TAB_ADD_W = 30;
+const TAB_MIN_W = 44;
+const TAB_MAX_W = 110;
+const TAB_ADD_W = 28;
 
 function layoutTabs(){
   const tabs = Array.from(tabsEl.querySelectorAll('.tab'));
